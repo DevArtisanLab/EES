@@ -36,8 +36,7 @@ $results = $conn->query("SELECT * FROM employee ORDER BY submitted_at DESC");
     <!-- Main Content -->
     <main class="flex-1 p-8">
       <div class="flex justify-between items-center mb-6">
-        <h1 class="text-2xl font-semibold">Employee Examination Results</h1>
-        <button class="bg-white border px-4 py-1 rounded shadow-sm hover:bg-gray-50">Logout</button>
+        <h1 class="text-2xl font-semibold">Dashboard</h1>
       </div>
 
       <!-- Stats Cards -->
@@ -59,49 +58,150 @@ $results = $conn->query("SELECT * FROM employee ORDER BY submitted_at DESC");
           <div class="text-2xl font-bold"><?= $pending ?></div>
         </div>
       </div>
+      <body>
+        <html>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body {
+            font-family: "Segoe UI", sans-serif;
+            background-color: #f8f9fa;
+            padding: 20px;
+        }
+        .card {
+            border-radius: 12px;
+        }
+        .card h5 {
+            font-size: 16px;
+            margin-bottom: 0.5rem;
+        }
+        .card .display-6 {
+            font-size: 32px;
+            font-weight: 600;
+        }
+        .chart-container {
+            width: 100%;
+            height: 300px;
+        }
+        .table img {
+            max-width: 100%;
+            border-radius: 12px;
+        }
+    </style>
+</head>
+<body>
+   
 
-      <!-- Table -->
-      <div class="bg-white shadow rounded">
-        <div class="p-4 border-b font-medium">Recent Examination Results</div>
-        <div class="overflow-x-auto">
-          <table class="min-w-full text-sm text-left">
-            <thead class="bg-gray-50 text-gray-700">
-              <tr>
-                <th class="px-4 py-2">NAME</th>
-                <th class="px-4 py-2">EXAMINATION</th>
-                <th class="px-4 py-2">SCORE</th>
-                <th class="px-4 py-2">STATUS</th>
-                <th class="px-4 py-2">DATE</th>
-                <th class="px-4 py-2">ACTION</th>
-              </tr>
-            </thead>
-            <tbody class="text-gray-700">
-              <?php while($row = $results->fetch_assoc()): ?>
-              <tr class="border-t">
-                <td class="px-4 py-2"><?= htmlspecialchars($row['full_name']) ?></td>
-                <td class="px-4 py-2"><?= htmlspecialchars($row['position']) ?></td>
-                <td class="px-4 py-2"><?= $row['score'] !== null ? $row['score'].'%' : 'N/A' ?></td>
-                <td class="px-4 py-2">
-                  <?php
-                    $status = $row['status'];
-                    $statusClass = match ($status) {
-                      'Passed' => 'bg-green-100 text-green-700',
-                      'Failed' => 'bg-red-100 text-red-700',
-                      'Pending' => 'bg-yellow-100 text-yellow-700',
-                      default => 'bg-gray-100 text-gray-700',
-                    };
-                  ?>
-                  <span class="<?= $statusClass ?> px-2 py-1 rounded text-xs"><?= $status ?></span>
-                </td>
-                <td class="px-4 py-2"><?= htmlspecialchars($row['submitted_at']) ?></td>
-                <td class="px-4 py-2"><button class="text-blue-600 underline">View Details</button></td>
-              </tr>
-              <?php endwhile; ?>
-            </tbody>
-          </table>
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <div class="card p-3">
+                <h5>Exam Pass Rates</h5>
+                <div class="chart-container">
+                    <canvas id="pieChart"></canvas>
+                </div>
+            </div>
         </div>
-      </div>
-    </main>
-  </div>
+        <div class="col-md-6">
+            <div class="card p-3">
+                <h5>Exam Comparison</h5>
+                <div class="chart-container">
+                    <canvas id="barChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-6">
+            <div class="card p-3">
+                <h5>Question Difficulty</h5>
+                <div class="chart-container">
+                    <canvas id="horizontalBarChart"></canvas>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card p-3">
+                <h5>Low-Passing Examination Questions</h5>
+                <img src="/mnt/data/3b838d46-bf03-4613-91e8-9cfa080c0c16.png" alt="Low-Passing Examination Questions Table">
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Pie Chart
+        const pieCtx = document.getElementById('pieChart').getContext('2d');
+        new Chart(pieCtx, {
+            type: 'pie',
+            data: {
+                labels: ['Passed', 'Failed', 'Pending'],
+                datasets: [{
+                    data: [87, 42, 27],
+                    backgroundColor: ['#28a745', '#dc3545', '#d39e00']
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        position: 'top'
+                    }
+                }
+            }
+        });
+
+        // Bar Chart - Exam Comparison
+        const barCtx = document.getElementById('barChart').getContext('2d');
+        new Chart(barCtx, {
+            type: 'bar',
+            data: {
+                labels: ['Software Dev', 'Data Analyst', 'Network Eng', 'UI/UX', 'DevOps'],
+                datasets: [{
+                    label: 'Pass Rate (%)',
+                    data: [85, 88, 75, 92, 78],
+                    backgroundColor: '#0d6efd'
+                }]
+            },
+            options: {
+                responsive: true,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        max: 100
+                    }
+                }
+            }
+        });
+
+        // Horizontal Bar Chart - Question Difficulty
+        const hBarCtx = document.getElementById('horizontalBarChart').getContext('2d');
+        new Chart(hBarCtx, {
+            type: 'bar',
+            data: {
+                labels: ['Q-1023', 'Q-0458', 'Q-2198', 'Q-0871', 'Q-1156'],
+                datasets: [{
+                    label: 'Pass Rate (%)',
+                    data: [35, 28, 40, 45, 30],
+                    backgroundColor: '#dc3545'
+                }]
+            },
+            options: {
+                indexAxis: 'y',
+                responsive: true,
+                scales: {
+                    x: {
+                        beginAtZero: true,
+                        max: 100
+                    }
+                }
+            }
+        });
+    </script>
 </body>
 </html>
