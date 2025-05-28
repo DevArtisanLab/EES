@@ -92,7 +92,7 @@ $results = $conn->query("SELECT * FROM employee ORDER BY submitted_at DESC");
               <tr class="border-t">
                 <td class="px-4 py-2"><?= htmlspecialchars($row['full_name']) ?></td>
                 <td class="px-4 py-2"><?= htmlspecialchars($row['position']) ?></td>
-                <td class="px-4 py-2"><?= $row['score'] !== null ? $row['score'].'%' : 'N/A' ?></td>
+                <td class="px-4 py-2"><?= $row['exam_1'] !== null ? $row['exam_1'].'%' : 'N/A' ?></td>
                 <td class="px-4 py-2">
                   <?php
                     $status = $row['status'];

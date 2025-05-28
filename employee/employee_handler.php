@@ -14,31 +14,36 @@ try {
 }
 
 if ($_SERVER["REQUEST_METHOD"] === "POST") {
+    // Sanitize input
     $full_name = htmlspecialchars($_POST["full_name"]);
-    $email = htmlspecialchars($_POST["email"]);
-    $dob = $_POST["dob"];
-    $phone = htmlspecialchars($_POST["phone"]);
-    $education_level = $_POST["education_level"];
-    $position = $_POST["position"];
+    $branch = htmlspecialchars($_POST["branch"]);
+    $position = htmlspecialchars($_POST["position"]);
+    $date_started = $_POST["date_started"];
+    $date_of_exam = $_POST["date_of_exam"] ?? date('Y-m-d'); // fallback to today's date
 
-    $_SESSION["name"] = $full_name;
-    $_SESSION["email"] = $email;
-    $_SESSION["dob"] = $dob;
-    $_SESSION["phone"] = $phone;
-    $_SESSION["education_level"] = $education_level;
+
+    // Store in session
+    $_SESSION["full_name"] = $full_name;
+    $_SESSION["branch"] = $branch;
     $_SESSION["position"] = $position;
+    $_SESSION["date_started"] = $date_started;
+    $_SESSION["date_of_exam"] = $date_of_exam;
+
+    // Start exam session data
     $_SESSION["start_time"] = time();
-    $_SESSION["exam_duration"] = 1000;
+    $_SESSION["exam_duration"] = 1000; // in seconds
 
+    // Insert into database
+    $stmt = $conn->prepare("INSERT INTO employee 
+        (full_name, branch, position, date_started, date_of_exam, submitted_at) 
+        VALUES (:full_name, :branch, :position, :date_started, :date_of_exam, NOW())");
 
-    $stmt = $conn->prepare("INSERT INTO employee (full_name, email, dob, phone, education_level, position)
-                            VALUES (:full_name, :email, :dob, :phone, :education_level, :position)");
     $stmt->bindParam(":full_name", $full_name);
-    $stmt->bindParam(":email", $email);
-    $stmt->bindParam(":dob", $dob);
-    $stmt->bindParam(":phone", $phone);
-    $stmt->bindParam(":education_level", $education_level);
+    $stmt->bindParam(":branch", $branch);
     $stmt->bindParam(":position", $position);
+    $stmt->bindParam(":date_started", $date_started);
+    $stmt->bindParam(":date_of_exam", $date_of_exam);
+
     $stmt->execute();
 
     header("Location: start_exam.php");

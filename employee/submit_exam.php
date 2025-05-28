@@ -5,12 +5,11 @@ if (!isset($_SESSION["name"], $_SESSION["position"])) {
     die("Session expired or user not logged in.");
 }
 
-$user_name = $_SESSION["name"];
-$user_email = $_SESSION["email"];
-$user_dob = $_SESSION["dob"];
-$user_phone = $_SESSION["phone"];
-$user_education = $_SESSION["education_level"];
-$user_position = $_SESSION["position"];
+$full_name = $_SESSION["full_name"];
+$branch = $_SESSION["branch"];
+$position = $_SESSION["position"];
+$date_started = $_SESSION["date_started"];
+$date_of_exam = $_SESSION["date_of_exam"];
 
 $host = 'localhost';
 $db = 'ees';
@@ -27,7 +26,6 @@ $correct_answers = [
 ];
 
 $total_questions = count($correct_answers);
-
 $score_count = 0;
 
 foreach ($correct_answers as $q => $correct_answer) {
@@ -42,20 +40,19 @@ $pass_mark = 75;
 $status = ($percentage >= $pass_mark) ? "Passed" : "Failed";
 
 $sql = "UPDATE employee 
-        SET score = ?, status = ? 
-        WHERE full_name = ? AND email = ? AND dob = ? AND phone = ? AND education_level = ? AND position = ?";
+        SET exam_1 = ?, status = ? 
+        WHERE full_name = ? AND branch = ? AND position = ? AND date_started = ? AND date_of_exam = ?";
 $stmt = $conn->prepare($sql);
 if (!$stmt) {
     die("Prepare failed: " . $conn->error);
 }
-$stmt->bind_param("dsssssss", $percentage, $status, $user_name, $user_email, $user_dob, $user_phone, $user_education, $user_position);
+$stmt->bind_param("dssssss", $percentage, $status, $full_name, $branch, $position, $date_started, $date_of_exam);
 $stmt->execute();
 $stmt->close();
 $conn->close();
 
 unset($_SESSION["start_time"]);
 unset($_SESSION["exam_duration"]);
-
 ?>
 
 <!DOCTYPE html>
@@ -91,4 +88,3 @@ unset($_SESSION["exam_duration"]);
     </div>
 </body>
 </html>
-

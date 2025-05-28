@@ -27,6 +27,35 @@ $results = $conn->query("SELECT * FROM employee ORDER BY submitted_at DESC");
   <title>Dashboard</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet" />
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+  <style>
+        body {
+            font-family: "Segoe UI", sans-serif;
+            background-color: #f8f9fa;
+            padding: 20px;
+        }
+        .card {
+            border-radius: 12px;
+        }
+        .card h5 {
+            font-size: 16px;
+            margin-bottom: 0.5rem;
+        }
+        .card .display-6 {
+            font-size: 32px;
+            font-weight: 600;
+        }
+        .chart-container {
+            width: 100%;
+            height: 300px;
+        }
+        .table img {
+            max-width: 100%;
+            border-radius: 12px;
+        }
+    </style>
 </head>
 <body class="bg-gray-100 font-sans">
   <div class="flex min-h-screen">
@@ -58,46 +87,7 @@ $results = $conn->query("SELECT * FROM employee ORDER BY submitted_at DESC");
           <div class="text-2xl font-bold"><?= $pending ?></div>
         </div>
       </div>
-      <body>
-        <html>
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin Dashboard</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <style>
-        body {
-            font-family: "Segoe UI", sans-serif;
-            background-color: #f8f9fa;
-            padding: 20px;
-        }
-        .card {
-            border-radius: 12px;
-        }
-        .card h5 {
-            font-size: 16px;
-            margin-bottom: 0.5rem;
-        }
-        .card .display-6 {
-            font-size: 32px;
-            font-weight: 600;
-        }
-        .chart-container {
-            width: 100%;
-            height: 300px;
-        }
-        .table img {
-            max-width: 100%;
-            border-radius: 12px;
-        }
-    </style>
-</head>
-<body>
-   
-
+      
     <div class="row mb-4">
         <div class="col-md-6">
             <div class="card p-3">
@@ -133,7 +123,6 @@ $results = $conn->query("SELECT * FROM employee ORDER BY submitted_at DESC");
             </div>
         </div>
     </div>
-
     <script>
         // Pie Chart
         const pieCtx = document.getElementById('pieChart').getContext('2d');
@@ -203,5 +192,5 @@ $results = $conn->query("SELECT * FROM employee ORDER BY submitted_at DESC");
             }
         });
     </script>
-</body>
-</html>
+    </body>
+    </html>

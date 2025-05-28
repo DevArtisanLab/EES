@@ -131,7 +131,7 @@ button:hover {
     <body>
   <div class="container">
     <div class="user-info">
-      <p><strong>Name:</strong> <?= htmlspecialchars($_SESSION["name"]) ?></p>
+      <p><strong>Name:</strong> <?= htmlspecialchars($_SESSION["full_name"]) ?></p>
       <p><strong>Position:</strong> <?= htmlspecialchars($_SESSION["position"]) ?></p>
       <p><strong>Time Remaining:</strong> <span id="timer"></span></p>
     </div>
@@ -139,11 +139,11 @@ button:hover {
     <form id="examForm" action="submit_exam.php" method="POST">
       <p class="question">Question 1 of 5: Which of the following is NOT a primary feature of object-oriented programming?</p>
 
-      <div class="options">
-        <label><input type="radio" name="q1" value="Encapsulation"> Encapsulation</label>
-        <label><input type="radio" name="q1" value="Inheritance"> Inheritance</label>
-        <label><input type="radio" name="q1" value="Sequential execution"> Sequential Execution</label>
-        <label><input type="radio" name="q1" value="Polymorphism"> Polymorphism</label>
+      <div class="options"required>
+        <label><input type="radio" name="q1" value="Encapsulation"required > Encapsulation</label>
+        <label><input type="radio" name="q1" value="Inheritance"required> Inheritance</label>
+        <label><input type="radio" name="q1" value="Sequential execution"required> Sequential Execution</label>
+        <label><input type="radio" name="q1" value="Polymorphism"required> Polymorphism</label>
       </div>
 
       <button type="submit">Submit Exam</button>

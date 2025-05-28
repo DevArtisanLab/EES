@@ -25,41 +25,34 @@
         </div>
 
         <div class="form-group">
-          <label>Email Address <span class="required">*</span></label>
-          <input type="email" name="email" required />
+          <label>Branch <span class="required">*</span></label>
+          <input type="text" name="branch" required />
         </div>
 
-        <div class="form-group">
-          <label>Date of Birth <span class="required">*</span></label>
-          <input type="date" name="dob" required />
-        </div>
-
-        <div class="form-group">
-          <label>Phone Number <span class="required">*</span></label>
-          <input type="tel" name="phone" required maxlength="11"/>
-        </div>
-
-        <div class="form-group">
-          <label>Highest Education Level <span class="required">*</span></label>
-          <select name="education_level" required>
-            <option value="">Select your education level</option>
-            <option value="high_school">High School</option>
-            <option value="bachelor">Bachelor's Degree</option>
-            <option value="master">Master's Degree</option>
-            <option value="phd">PhD</option>
-          </select>
-        </div>
-
-        <div class="form-group">
-          <label>Position Applied For <span class="required">*</span></label>
+         <div class="form-group">
+          <label>Position For <span class="required">*</span></label>
           <select name="position" required>
             <option value="">Select the position</option>
-            <option value="Developer">Developer</option>
-            <option value="Designer">Designer</option>
-            <option value="Manager">Manager</option>
-            <option value="Analyst">Analyst</option>
+            <option value="Store Manager">Store Manager</option>
+            <option value="Management Trainee">Management Trainee</option>
+            <option value="Admin Assistant">Admin Assistant</option>
+            <option value="Dining Supervisor">Dining Supervisor</option>
+            <option value="Kitchen Supervisor">Kitchen Supervisor</option>
+            <option value="Cashier">Cashier</option>
+            <option value="Dining Staff">Dining Staff</option>
+            <option value="Kitchen Staff">Kitchen Staff</option>
           </select>
         </div>
+
+        <div class="form-group">
+          <label>Date Started in the Company <span class="required">*</span></label>
+          <input type="date" name="date_started" required />
+        </div>
+
+       <div class="form-group">
+  <label>Date of Examination <span class="required">*</span></label>
+  <input type="date" name="date_of_exam" value="<?php echo date('Y-m-d'); ?>" readonly required>
+</div>
 
         <div class="text-center">
           <button type="submit" id="ExamBtn">Next: Start Examination</button>
