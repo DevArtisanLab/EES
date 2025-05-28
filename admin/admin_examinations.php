@@ -138,12 +138,12 @@ include 'sidebar.php';
             <tbody>
                 <?php while($row = $result->fetch_assoc()): ?>
                 <tr>
-                              <td><? = $row['exam_id'] ?></td>
-                              <td><? = $row['title'] ?></td>
-                              <td><? = $row['position'] ?></td>
-                              <td><? = $row['questions'] ?></td>
-                              <td><? = $row['duration'] ?> min</td>
-                              <td><? = $row['created'] ?></td>
+                    <td><? = $row['exam_id'] ?></td>
+                    <td><? = $row['title'] ?></td>
+                    <td><? = $row['position'] ?></td>
+                    <td><? = $row['questions'] ?></td>
+                    <td><? = $row['duration'] ?> min</td>
+                    <td><? = $row['created'] ?></td>
                     <td><span class  = "status-active"><?                                = $row['status'] ?></span></td>
                     <td       class  = "action-btns">
                     <a        href   = "view_exam.php?id=<?= $row['exam_id'] ?>" class   = "btn btn-outline-primary">View</a>

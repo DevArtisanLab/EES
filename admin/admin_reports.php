@@ -99,10 +99,10 @@
 <body>
 
   <div class="top-bar">
-    <h1>Examination Results</h1>
+    <h1>Reports</h1>
     <div>
-      <button class="button export-btn">📄 Export Report</button>
-      <button class="button">🖨️ Print</button>
+      <button class="button export-btn">📄 Generate Report</button>
+      <button class="button">🖨️ Export Report</button>
     </div>
   </div>
 
@@ -124,28 +124,6 @@
     </label>
   </div>
 
-  <div class="stats-container">
-    <div class="card">
-      <div class="card-title">Total Applicants</div>
-      <div class="card-value">156</div>
-      <div class="trend trend-up">⬆ 12% from last month</div>
-    </div>
-    <div class="card">
-      <div class="card-title">Pass Rate</div>
-      <div class="card-value">56%</div>
-      <div class="trend trend-up">⬆ 4% from last month</div>
-    </div>
-    <div class="card">
-      <div class="card-title">Average Score</div>
-      <div class="card-value">78%</div>
-      <div class="trend trend-up">⬆ 2% from last month</div>
-    </div>
-    <div class="card">
-      <div class="card-title">Pending Reviews</div>
-      <div class="card-value">27</div>
-      <div class="trend trend-down">⬇ 5% from last month</div>
-    </div>
-  </div>
 
 </body>
 </html>
