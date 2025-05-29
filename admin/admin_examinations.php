@@ -124,7 +124,7 @@ include 'sidebar.php';
                     <th>Exam ID</th>
                     <th>Title</th>
                     <th>Position</th>
-                    <th>Questions</th>
+              
                     <th>Duration</th>
                     <th>Created</th>
                     <th>Status</th>
@@ -137,7 +137,7 @@ include 'sidebar.php';
                     <td><?= $row['exam_id'] ?></td>
                     <td><?= $row['title'] ?></td>
                     <td><?= $row['position'] ?></td>
-                    <td><?= $row['questions'] ?></td>
+               
                     <td><?= $row['duration'] ?> min</td>
                     <td><?= $row['created'] ?></td>
                     <td><span class="status-active"><?= $row['status'] ?></span></td>
