@@ -1,7 +1,7 @@
 <?php
 session_start();
 
-if (!isset($_SESSION["name"], $_SESSION["start_time"], $_SESSION["exam_duration"])) {
+if (!isset($_SESSION["full_name"], $_SESSION["start_time"], $_SESSION["exam_duration"])) {
     header("Location: employee_form.php");
     exit;
 }

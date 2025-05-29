@@ -46,10 +46,10 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
 
     $stmt->execute();
 
-    header("Location: start_exam.php");
+    header("Location: /np/ees/employee/start_exam.php");
     exit;
 } else {
-    header("Location: application_form.php");
+    header("Location: ../index.php");
     exit;
 }
 ?>

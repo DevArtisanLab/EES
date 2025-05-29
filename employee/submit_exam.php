@@ -1,7 +1,7 @@
 <?php
 session_start();
 
-if (!isset($_SESSION["name"], $_SESSION["position"])) {
+if (!isset($_SESSION["full_name"], $_SESSION["position"])) {
     die("Session expired or user not logged in.");
 }
 

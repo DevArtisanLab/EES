@@ -1,3 +1,5 @@
+console.log("JavaScript loaded!");
+
 document.getElementById('startExamBtn').addEventListener('click', function() {
   window.location.href = './employee/employee_form.php';
 });

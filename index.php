@@ -40,8 +40,8 @@
 </html>
 
 
-<?php include 'includes/footer.php';
+<!-- <?php include 'includes/footer.php';
 
-?>
+?> -->
 
 <script src="assets/main.js"></script>
