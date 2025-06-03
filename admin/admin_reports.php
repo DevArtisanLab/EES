@@ -16,6 +16,7 @@
       font-size: 36px;
       font-weight: 700;
       color: #111827;
+      
     }
 
     .filters {

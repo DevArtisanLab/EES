@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: May 29, 2025 at 08:32 AM
+-- Generation Time: Jun 03, 2025 at 04:30 AM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -62,14 +62,6 @@ CREATE TABLE `employee` (
   `submitted_at` datetime DEFAULT current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
---
--- Dumping data for table `employee`
---
-
-INSERT INTO `employee` (`id`, `full_name`, `branch`, `position`, `date_started`, `date_of_exam`, `exam_1`, `average`, `status`, `submitted_at`) VALUES
-(46, 'adga', 'gadg', 'Dining Staff', '2025-01-06', '2025-05-29', 100.00, NULL, 'Passed', '2025-05-29 07:46:52'),
-(47, 'Guillermo Mercado', 'NP Arnolds', 'Kitchen Supervisor', '2025-01-06', '2025-05-29', 0.00, NULL, 'Failed', '2025-05-29 13:35:35');
-
 -- --------------------------------------------------------
 
 --
@@ -77,26 +69,32 @@ INSERT INTO `employee` (`id`, `full_name`, `branch`, `position`, `date_started`,
 --
 
 CREATE TABLE `examinations` (
-  `id` int(11) NOT NULL,
-  `exam_id` varchar(50) DEFAULT NULL,
-  `title` varchar(255) NOT NULL,
-  `position` varchar(100) NOT NULL,
-  `duration` int(11) NOT NULL,
-  `created` timestamp NOT NULL DEFAULT current_timestamp(),
-  `question_id` int(11) NOT NULL,
-  `question_text` text NOT NULL,
-  `option_id` int(11) NOT NULL,
-  `option_text` varchar(255) NOT NULL,
-  `is_correct` tinyint(1) NOT NULL DEFAULT 0,
-  `status` enum('Draft','Active') NOT NULL DEFAULT 'Draft'
+  `exam_id` int(10) UNSIGNED NOT NULL,
+  `title` varchar(255) DEFAULT NULL,
+  `position` varchar(100) DEFAULT NULL,
+  `duration` int(11) DEFAULT NULL,
+  `description` text DEFAULT NULL,
+  `passing_score` int(11) DEFAULT NULL,
+  `status` varchar(50) DEFAULT NULL,
+  `created` datetime DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
+-- --------------------------------------------------------
+
 --
--- Dumping data for table `examinations`
+-- Table structure for table `questions`
 --
 
-INSERT INTO `examinations` (`id`, `exam_id`, `title`, `position`, `duration`, `created`, `question_id`, `question_text`, `option_id`, `option_text`, `is_correct`, `status`) VALUES
-(1, 'TSD01', 'TSD', 'All Employee', 60, '2025-05-29 06:19:31', 1, 'What is HTML?', 1, 'Hypertext Markup Language', 1, 'Active');
+CREATE TABLE `questions` (
+  `id` int(10) UNSIGNED NOT NULL,
+  `exam_id` int(10) UNSIGNED NOT NULL,
+  `question_text` text NOT NULL,
+  `question_type` varchar(50) NOT NULL,
+  `correct_answer` text DEFAULT NULL,
+  `options` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL CHECK (json_valid(`options`)),
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
+  `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Indexes for dumped tables
@@ -119,7 +117,14 @@ ALTER TABLE `employee`
 -- Indexes for table `examinations`
 --
 ALTER TABLE `examinations`
-  ADD PRIMARY KEY (`id`);
+  ADD PRIMARY KEY (`exam_id`);
+
+--
+-- Indexes for table `questions`
+--
+ALTER TABLE `questions`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `exam_id` (`exam_id`);
 
 --
 -- AUTO_INCREMENT for dumped tables
@@ -135,13 +140,29 @@ ALTER TABLE `admins`
 -- AUTO_INCREMENT for table `employee`
 --
 ALTER TABLE `employee`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=48;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=54;
 
 --
 -- AUTO_INCREMENT for table `examinations`
 --
 ALTER TABLE `examinations`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+  MODIFY `exam_id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT for table `questions`
+--
+ALTER TABLE `questions`
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT;
+
+--
+-- Constraints for dumped tables
+--
+
+--
+-- Constraints for table `questions`
+--
+ALTER TABLE `questions`
+  ADD CONSTRAINT `questions_ibfk_1` FOREIGN KEY (`exam_id`) REFERENCES `examinations` (`exam_id`) ON DELETE CASCADE;
 COMMIT;
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;

@@ -3,10 +3,36 @@ $conn = new mysqli("localhost", "root", "", "ees");
 if ($conn->connect_error) {
     die("Connection failed: " . $conn->connect_error);
 }
+
+// Handle form submission
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['title'])) {
+    $title         = $conn->real_escape_string($_POST['title']);
+    $position      = $conn->real_escape_string($_POST['position']);
+    $duration      = (int) $_POST['duration'];
+    $description   = $conn->real_escape_string($_POST['description']);
+    $passing_score = (int) $_POST['passing_score'];
+    $status        = $conn->real_escape_string($_POST['status']);
+
+    $created = date('Y-m-d H:i:s');
+
+    $insert_sql = "INSERT INTO examinations (title, position, duration, description, passing_score, status, created)
+                   VALUES ('$title', '$position', $duration, '$description', $passing_score, '$status', '$created')";
+
+    if ($conn->query($insert_sql) === TRUE) {
+        // Redirect to refresh the page and avoid form resubmission
+        header("Location: " . $_SERVER['PHP_SELF']);
+        exit();
+    } else {
+        echo "Error: " . $insert_sql . "<br>" . $conn->error;
+    }
+}
+
 $sql    = "SELECT * FROM examinations WHERE status = 'Active'";
 $result = $conn->query($sql);
+
 include 'sidebar.php';
 ?>
+
 <!DOCTYPE html>
 <html>
 <head>
@@ -158,46 +184,55 @@ include 'sidebar.php';
     <div class="modal-content">
         <span class="close" onclick="closeModal()">&times;</span>
         <h2>Create New Examination</h2>
-        <form>
-            <label>Examination Title</label>
-            <input type="text" placeholder="e.g. Human Resource Department" required>
-            <div class="form-row">
-                <div>
-                    <label for="position">Position</label>
-                    <select name="position" id="position" required class="form-select">
-                        <option value="" disabled selected hidden>Select Department</option>
-                        <option value="All" required>All</option>
-                        <option value="Technical Service Department" required>Store Manager</option>
-                        <option value="Human Resource Department" required>Management Trainee</option>
-                        <option value="Accounting Department" required>Accounting Department</option>
-                    </select>
-                </div>
-                <div>
-                    <label>Duration (minutes)</label>
-                    <input type="number" value="60" required>
-                </div>
-            </div>
-            <label>Description</label>
-            <textarea placeholder="Provide a description of this examination" required></textarea>
-            <div class="form-row">
-                <div>
-                    <label>Passing Score (%)</label>
-                    <input type="number" value="75" required>
-                </div>
-                <div>
-                    <label for="status">Status</label>
-                    <select name="status" id="status" required class="form-select">
-                        <option value="" disabled selected hidden>Select Status</option>
-                        <option value="Draft">Draft</option>
-                        <option value="Active">Active</option>
-                    </select>
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" onclick="closeModal()">Cancel</button>
-                <button type="button" class="btn btn-primary" onclick="opensModal()">Next</button>
-            </div>
-        </form>
+        <form method="POST" action="">
+    <label>Examination Title</label>
+    <input type="text" name="title" placeholder="e.g. Human Resource Department" required>
+
+    <div class="form-row">
+        <div>
+            <label for="position">Position</label>
+            <select name="position" id="position" required class="form-select">
+                <option value="" disabled selected hidden>Select Department</option>
+                <option value="All">All</option>
+                <option value="SM">Store Manager</option>
+                <option value="MT">Management Trainee</option>
+                <option value="KS">Kitchen Supervisor</option>
+                <option value="DS">Dining Supervisor</option>
+                <option value="CS">Cashier</option>
+                <option value="KSS">Kitchen Staff</option>
+                <option value="DSS">Dining Staff</option>
+            </select>
+        </div>
+        <div>
+            <label>Duration (minutes)</label>
+            <input type="number" name="duration" value="60" required>
+        </div>
+    </div>
+
+    <label>Description</label>
+    <textarea name="description" placeholder="Provide a description of this examination" required></textarea>
+
+    <div class="form-row">
+        <div>
+            <label>Passing Score (%)</label>
+            <input type="number" name="passing_score" value="75" required>
+        </div>
+        <div>
+            <label for="status">Status</label>
+            <select name="status" id="status" required class="form-select">
+                <option value="" disabled selected hidden>Select Status</option>
+                <option value="Draft">Draft</option>
+                <option value="Active">Active</option>
+            </select>
+        </div>
+    </div>
+
+    <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" onclick="closeModal()">Cancel</button>
+        <button type="submit" class="btn btn-primary">Next</button>
+    </div>
+</form>
+
     </div>
 </div>
 
