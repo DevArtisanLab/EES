@@ -229,9 +229,9 @@ include 'sidebar.php';
 
     <div class="modal-footer">
         <button type="button" class="btn btn-secondary" onclick="closeModal()">Cancel</button>
-        <button type="submit" class="btn btn-primary">Next</button>
+        <button id="btnQuestion" onclick="opensModal()">Next</button>
     </div>
-</form>
+
 
     </div>
 </div>
@@ -302,7 +302,7 @@ include 'sidebar.php';
         </form>
     </div>
 </div>
-
+</form>
 <script>
     function openModal() {
         document.getElementById("examModal").style.display = "block";
@@ -313,7 +313,6 @@ include 'sidebar.php';
     }
 
     function opensModal() {
-        closeModal();
         document.getElementById("questionModal").style.display = "block";
     }
 
