@@ -50,8 +50,9 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
 </head>
 <body>
-<div class="container my-5">
-    <h3 class="mb-4">Add Examination Questions (Exam ID: <?= htmlspecialchars($exam_id) ?>)</h3>
+<div class="container my-0">
+    <h3 class="mb-4">Add Examination Questions </h3>
+    <h3 class="mb-4">Examination ID: (<?= htmlspecialchars($exam_id) ?>)</h3>
     <form method="POST">
         <?php for ($i = 1; $i <= 25; $i++): ?>
     <div class="card mb-3">
