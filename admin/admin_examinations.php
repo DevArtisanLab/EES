@@ -140,7 +140,6 @@ include 'sidebar.php';
     <ul class="nav nav-tabs mb-3">
         <li class="nav-item"><a class="nav-link active" href="#">Active Examinations</a></li>
         <li class="nav-item"><a class="nav-link" href="#">Draft</a></li>
-        <li class="nav-item"><a class="nav-link" href="#">Archived</a></li>
     </ul>
 
     <div class="table-responsive">

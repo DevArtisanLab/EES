@@ -7,10 +7,10 @@
   <link rel="stylesheet" href="..\assets\employee_form.css"/>
 </head>
 <body>
-   <header>
+   <!-- <header>
   <a href="..\index.php" class="title">Employee Examination System</a>
   <a href="..\index.php" class="back-button">← Back to Home</a>
-</header>
+</header> -->
 
 
   <main>
@@ -19,6 +19,10 @@
       <p class="description">Please provide your personal information before starting the examination.</p>
 
       <form action="employee_handler.php" method="POST">
+          <div class="form-group">
+          <label>Employee Number <span class="required">*</span></label>
+          <input type="text" name="employee_num" required />
+        </div>
         <div class="form-group">
           <label>Full Name <span class="required">*</span></label>
           <input type="text" name="full_name" required />

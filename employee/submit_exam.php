@@ -40,7 +40,7 @@ $pass_mark = 75;
 $status = ($percentage >= $pass_mark) ? "Passed" : "Failed";
 
 $sql = "UPDATE employee 
-        SET exam_1 = ?, status = ? 
+        SET score = ?, status = ? 
         WHERE full_name = ? AND branch = ? AND position = ? AND date_started = ? AND date_of_exam = ?";
 $stmt = $conn->prepare($sql);
 if (!$stmt) {
