@@ -77,8 +77,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     <label>Status</label>
                     <select name="status" class="form-select" required>
                         <option value="" disabled selected>Select Status</option>
-                        <option value="Draft">Draft</option>
                         <option value="Active">Active</option>
+                          <option value="Inactive">Inactive</option>
                     </select>
                 </div>
             </div>

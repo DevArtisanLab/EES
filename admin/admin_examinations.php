@@ -27,7 +27,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['title'])) {
     }
 }
 
-$sql    = "SELECT * FROM examinations WHERE status = 'Active'";
+$sql    = "SELECT * FROM examinations ";
 $result = $conn->query($sql);
 
 include 'sidebar.php';
@@ -139,7 +139,6 @@ include 'sidebar.php';
 
     <ul class="nav nav-tabs mb-3">
         <li class="nav-item"><a class="nav-link active" href="#">Active Examinations</a></li>
-        <li class="nav-item"><a class="nav-link" href="#">Draft</a></li>
     </ul>
 
     <div class="table-responsive">
