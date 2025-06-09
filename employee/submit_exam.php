@@ -59,7 +59,7 @@ foreach ($answers as $question_id => $selected_option) {
 
 // Final score computation
 $percentage = ($total_questions > 0) ? ($score_count / $total_questions) * 100 : 0;
-$int_score = round($percentage); // For int columns in DB
+$int_score = round($percentage);
 
 // Determine which score column is empty
 $score_column = null;
@@ -78,18 +78,17 @@ foreach ($row as $column => $value) {
     }
 }
 if (!$score_column) {
-    // All score columns filled, overwrite score_1 or handle as needed
-    $score_column = "score_1";
+    $score_column = "score_1"; // overwrite if all are full
 }
 
-// Update employee record with new score
+// Update selected score column
 $update_score_sql = "UPDATE employee SET `$score_column` = ?, submitted_at = ? WHERE employee_num = ?";
 $stmt = $conn->prepare($update_score_sql);
 $stmt->bind_param("iss", $int_score, $current_time, $employee_num);
 $stmt->execute();
 $stmt->close();
 
-// Now re-fetch all scores to calculate average
+// Re-fetch all scores and calculate average
 $stmt = $conn->prepare("SELECT score_1, score_2, score_3, score_4, score_5 FROM employee WHERE employee_num = ?");
 $stmt->bind_param("s", $employee_num);
 $stmt->execute();
@@ -97,21 +96,21 @@ $result = $stmt->get_result();
 $scores_row = $result->fetch_assoc();
 $stmt->close();
 
-// Calculate average ignoring NULLs
 $sum = 0;
 $count = 0;
 foreach ($scores_row as $score) {
-    if ($score !== null) {
+    if (!is_null($score)) {
         $sum += $score;
         $count++;
     }
 }
 $average = ($count > 0) ? ($sum / $count) : 0;
+$average_rounded = round($average, 2);
 $status = ($average >= 75) ? "Passed" : "Failed";
 
-// Update status with average-based pass/fail
-$stmt = $conn->prepare("UPDATE employee SET status = ? WHERE employee_num = ?");
-$stmt->bind_param("ss", $status, $employee_num);
+// ✅ Update status and average column
+$stmt = $conn->prepare("UPDATE employee SET status = ?, average = ? WHERE employee_num = ?");
+$stmt->bind_param("sds", $status, $average_rounded, $employee_num);
 $stmt->execute();
 $stmt->close();
 
@@ -148,9 +147,6 @@ $conn->close();
     <div class="check-icon mb-3">✔️</div>
     <h3>Examination Complete!</h3>
     <p>Thank you for completing the examination.</p>
-    <p><strong>Score:</strong> <?= $int_score ?>%</p>
-    <p><strong>Average Score:</strong> <?= round($average, 2) ?>%</p>
-    <p><strong>Status:</strong> <?= $status ?></p>
     <a href="../index.php" class="btn btn-primary mt-4">Return to Home</a>
 </div>
 </body>

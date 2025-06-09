@@ -137,10 +137,6 @@ include 'sidebar.php';
         <a href="admin_createexam.php" class="btn btn-primary" id="btnCreate">+ Create Exam</a>
     </div>
 
-    <ul class="nav nav-tabs mb-3">
-        <li class="nav-item"><a class="nav-link active" href="#">Active Examinations</a></li>
-    </ul>
-
     <div class="table-responsive">
         <table class="table align-middle">
             <thead>
