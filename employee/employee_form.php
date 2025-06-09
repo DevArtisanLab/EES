@@ -20,8 +20,8 @@
 
       <form action="employee_handler.php" method="POST">
           <div class="form-group">
-          <label>Employee Number <span class="required">*</span></label>
-          <input type="text" name="employee_num" required />
+          <label for="employee_num">Employee Number <span class="required">*</span></label>
+          <input type="text" id="employee_num" name="employee_num" maxlength="6" required>
         </div>
         <div class="form-group">
           <label>Full Name <span class="required">*</span></label>
@@ -34,7 +34,7 @@
         </div>
 
          <div class="form-group">
-          <label>Position For <span class="required">*</span></label>
+          <label>Position<span class="required">*</span></label>
           <select name="position" required>
             <option value="">Select the position</option>
             <option value="Store Manager">Store Manager</option>

@@ -45,10 +45,14 @@ if (!isset($_SESSION['current_question'])) {
     $_SESSION['current_question'] = 0;
 }
 
-// Process submitted answer
-if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST['answer'])) {
+if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST['answer']) && isset($_POST['question_id'])) {
     $selected = $_POST['answer'];
-    $_SESSION['answers'][$_SESSION['current_question']] = $selected;
+    $question_id = $_POST['question_id'];
+
+    // Store answer and question_id in session (you can change how you want to store it)
+    $_SESSION['answers'][$question_id] = $selected;
+
+    // If you want to keep current_question counter separately
     $_SESSION['current_question']++;
 
     if ($_SESSION['current_question'] >= $total_q) {
@@ -56,6 +60,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST['answer'])) {
         exit;
     }
 }
+
 
 // Fetch current question
 $q_index = $_SESSION['current_question'];
@@ -154,6 +159,7 @@ $question = $question_result->fetch_assoc();
         <p class="question">
             Question <?= $q_index + 1 ?> of <?= $total_q ?>:<br>
             <?= htmlspecialchars($question['question_text']) ?>
+            <input type="hidden" name="question_id" value="<?= htmlspecialchars($question['id']) ?>">
         </p>
         <div class="options">
             <label><input type="radio" name="answer" value="A. <?= htmlspecialchars($question['option_a']) ?>" required> <?= htmlspecialchars($question['option_a']) ?></label>

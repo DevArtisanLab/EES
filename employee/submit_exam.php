@@ -1,38 +1,15 @@
 <?php
-// Increase session lifetime and start session
-ini_set('session.gc_maxlifetime', 3600); // 1 hour
-session_set_cookie_params(3600);
 session_start();
 
-// REMOVE or comment this block in production when real session data is set.
-if (!isset($_SESSION['answers'])) {
-    $_SESSION['employee_num'];
-    $_SESSION['full_name'];
-    $_SESSION['branch'] ;
-    $_SESSION['position'] ;
-    $_SESSION['date_started'];
-    $_SESSION['date_of_exam'] ;
-    
-}
-
 // Required session keys
-$required_keys = [
-    "employee_num", "full_name", "branch", "position",
-    "date_started", "date_of_exam", "answers"
-];
-
-// Check for missing session keys
-$missing_keys = [];
+$required_keys = ["employee_num", "full_name", "branch", "position", "date_started", "date_of_exam", "answers"];
 foreach ($required_keys as $key) {
     if (!isset($_SESSION[$key])) {
-        $missing_keys[] = $key;
+        die("Missing session data: $key");
     }
 }
-if (!empty($missing_keys)) {
-    die("Session expired or missing: " . implode(', ', $missing_keys));
-}
 
-// Assign session values
+// Session variables
 $employee_num  = $_SESSION["employee_num"];
 $full_name     = $_SESSION["full_name"];
 $branch        = $_SESSION["branch"];
@@ -40,77 +17,109 @@ $position      = $_SESSION["position"];
 $date_started  = $_SESSION["date_started"];
 $date_of_exam  = $_SESSION["date_of_exam"];
 $answers       = $_SESSION["answers"];
+$exam_id       = $_SESSION['exam_id'] ?? null;
 
-// Database connection info
-$host = 'localhost';
-$db   = 'ees';
-$user = 'root';
-$pass = '';
-
-$conn = new mysqli($host, $user, $pass, $db);
+// Database connection
+$conn = new mysqli("localhost", "root", "", "ees");
 if ($conn->connect_error) {
     die("Connection failed: " . $conn->connect_error);
 }
 
-// Step 1: Fetch correct answers for this exam
-$correct_sql = "SELECT id, correct_option, exam_id FROM question";
-$correct_result = $conn->query($correct_sql);
-
-if (!$correct_result) {
-    die("Failed to fetch questions: " . $conn->error);
+if (!$exam_id) {
+    die("Exam ID is missing.");
 }
 
+// Fetch correct answers
 $correct_answers = [];
-$exam_id = null;
-
-while ($row = $correct_result->fetch_assoc()) {
-    $correct_answers[$row['id']] = $row['correct_option'];
-    $exam_id = $row['exam_id']; // assuming all questions belong to one exam
+$stmt = $conn->prepare("SELECT id, correct_option FROM question WHERE exam_id = ?");
+$stmt->bind_param("i", $exam_id);
+$stmt->execute();
+$result = $stmt->get_result();
+while ($row = $result->fetch_assoc()) {
+    $correct_answers[$row['id']] = strtoupper(trim($row['correct_option']));
 }
+$stmt->close();
 
-// Step 2: Save answers & compute score
+// Score evaluation
 $score_count = 0;
 $total_questions = count($correct_answers);
 $current_time = date('Y-m-d H:i:s');
 
+// Insert answers and calculate score
 foreach ($answers as $question_id => $selected_option) {
-    $parsed_letter = substr($selected_option, 0, 1);
-    $is_correct = (isset($correct_answers[$question_id]) && $correct_answers[$question_id] === $parsed_letter) ? 1 : 0;
-    if ($is_correct) $score_count++;
+    $parsed_letter = strtoupper(substr(trim($selected_option), 0, 1));
+    $is_correct = isset($correct_answers[$question_id]) && $correct_answers[$question_id] === $parsed_letter ? 1 : 0;
+    $score_count += $is_correct;
 
-    $stmt = $conn->prepare("INSERT INTO answers (employee_num, exam_id,  selected_option, is_correct, answered_at) VALUES ( ?, ?, ?, ?, ?)");
-    if (!$stmt) {
-        die("Prepare failed: " . $conn->error);
-    }
-    // Bind parameters:
-    // employee_num (int), exam_id (int),  selected_option (string), is_correct (int), answered_at (string)
-    $stmt->bind_param("iisis", $employee_num, $exam_id, $selected_option, $is_correct, $current_time);
+    $stmt = $conn->prepare("INSERT INTO answers (employee_num, exam_id, selected_option, is_correct, answered_at) VALUES (?, ?, ?, ?, ?)");
+    $stmt->bind_param("sissi", $employee_num, $exam_id, $parsed_letter, $is_correct, $current_time);
     $stmt->execute();
     $stmt->close();
 }
 
-// Step 3: Calculate final score and status
+// Final score computation
 $percentage = ($total_questions > 0) ? ($score_count / $total_questions) * 100 : 0;
-$pass_mark = 75;
-$status = ($percentage >= $pass_mark) ? "Passed" : "Failed";
+$int_score = round($percentage); // For int columns in DB
 
-// Step 4: Update employee record
-$update_sql = "UPDATE employee SET score = ?, status = ? WHERE employee_num = ?";
-$stmt = $conn->prepare($update_sql);
-if (!$stmt) {
-    die("Prepare failed: " . $conn->error);
+// Determine which score column is empty
+$score_column = null;
+$query = "SELECT score_1, score_2, score_3, score_4, score_5 FROM employee WHERE employee_num = ?";
+$stmt = $conn->prepare($query);
+$stmt->bind_param("s", $employee_num);
+$stmt->execute();
+$result = $stmt->get_result();
+$row = $result->fetch_assoc();
+$stmt->close();
+
+foreach ($row as $column => $value) {
+    if (is_null($value)) {
+        $score_column = $column;
+        break;
+    }
 }
-$stmt->bind_param("dsi", $percentage, $status, $employee_num);
+if (!$score_column) {
+    // All score columns filled, overwrite score_1 or handle as needed
+    $score_column = "score_1";
+}
+
+// Update employee record with new score
+$update_score_sql = "UPDATE employee SET `$score_column` = ?, submitted_at = ? WHERE employee_num = ?";
+$stmt = $conn->prepare($update_score_sql);
+$stmt->bind_param("iss", $int_score, $current_time, $employee_num);
 $stmt->execute();
 $stmt->close();
 
-// Optional: Clear answers from session after processing
-unset($_SESSION["answers"]);
-unset($_SESSION["start_time"]);
-unset($_SESSION["exam_duration"]);
+// Now re-fetch all scores to calculate average
+$stmt = $conn->prepare("SELECT score_1, score_2, score_3, score_4, score_5 FROM employee WHERE employee_num = ?");
+$stmt->bind_param("s", $employee_num);
+$stmt->execute();
+$result = $stmt->get_result();
+$scores_row = $result->fetch_assoc();
+$stmt->close();
 
+// Calculate average ignoring NULLs
+$sum = 0;
+$count = 0;
+foreach ($scores_row as $score) {
+    if ($score !== null) {
+        $sum += $score;
+        $count++;
+    }
+}
+$average = ($count > 0) ? ($sum / $count) : 0;
+$status = ($average >= 75) ? "Passed" : "Failed";
+
+// Update status with average-based pass/fail
+$stmt = $conn->prepare("UPDATE employee SET status = ? WHERE employee_num = ?");
+$stmt->bind_param("ss", $status, $employee_num);
+$stmt->execute();
+$stmt->close();
+
+// Clean up session
+unset($_SESSION["answers"], $_SESSION["start_time"], $_SESSION["exam_duration"]);
 $conn->close();
 ?>
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -135,11 +144,14 @@ $conn->close();
     </style>
 </head>
 <body>
-    <div class="card text-center">
-        <div class="check-icon mb-3">✔️</div>
-        <h3>Examination Complete!</h3>
-        <p>Thank you for completing the examination.<br />
-        <a href="../index.php" class="btn btn-primary mt-4">Return to Home</a>
-    </div>
+<div class="card text-center">
+    <div class="check-icon mb-3">✔️</div>
+    <h3>Examination Complete!</h3>
+    <p>Thank you for completing the examination.</p>
+    <p><strong>Score:</strong> <?= $int_score ?>%</p>
+    <p><strong>Average Score:</strong> <?= round($average, 2) ?>%</p>
+    <p><strong>Status:</strong> <?= $status ?></p>
+    <a href="../index.php" class="btn btn-primary mt-4">Return to Home</a>
+</div>
 </body>
 </html>
