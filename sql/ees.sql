@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Jun 04, 2025 at 11:16 AM
+-- Generation Time: Jun 10, 2025 at 10:07 AM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -44,6 +44,22 @@ INSERT INTO `admins` (`id`, `full_name`, `username`, `password`) VALUES
 -- --------------------------------------------------------
 
 --
+-- Table structure for table `answers`
+--
+
+CREATE TABLE `answers` (
+  `id` int(11) NOT NULL,
+  `employee_num` int(11) NOT NULL,
+  `exam_id` int(11) NOT NULL,
+  `selected_option` varchar(1) NOT NULL,
+  `is_correct` tinyint(1) DEFAULT NULL,
+  `answered_at` datetime NOT NULL DEFAULT current_timestamp(),
+  `question_id` int(11) NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- --------------------------------------------------------
+
+--
 -- Table structure for table `employee`
 --
 
@@ -55,20 +71,20 @@ CREATE TABLE `employee` (
   `position` varchar(100) NOT NULL,
   `date_started` date NOT NULL,
   `date_of_exam` date NOT NULL,
-  `score` int(11) NOT NULL,
+  `score_1` int(11) DEFAULT NULL,
+  `score_2` int(11) DEFAULT NULL,
+  `score_3` int(11) DEFAULT NULL,
+  `score_4` int(11) DEFAULT NULL,
+  `score_5` int(11) DEFAULT NULL,
+  `score_6` int(11) DEFAULT NULL,
+  `score_7` int(11) DEFAULT NULL,
+  `score_8` int(11) DEFAULT NULL,
+  `score_9` int(11) DEFAULT NULL,
+  `score_10` int(11) DEFAULT NULL,
   `average` decimal(5,2) DEFAULT NULL,
   `status` varchar(50) DEFAULT NULL,
   `submitted_at` datetime DEFAULT current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
---
--- Dumping data for table `employee`
---
-
-INSERT INTO `employee` (`employee_num`, `id`, `full_name`, `branch`, `position`, `date_started`, `date_of_exam`, `score`, `average`, `status`, `submitted_at`) VALUES
-('250007', 59, 'Guillermo Mercado', 'NP Arnolds', 'Store Manager', '2025-01-06', '2025-06-04', 100, NULL, 'Passed', '2025-06-04 16:19:10'),
-('sa', 66, 'a', 'fs', 'Store Manager', '2025-01-06', '2025-06-04', 0, NULL, NULL, '2025-06-04 16:19:19'),
-('afa', 67, 'fadf', 'adfa', 'Store Manager', '1111-01-06', '2025-06-04', 0, NULL, NULL, '2025-06-04 16:19:34');
 
 -- --------------------------------------------------------
 
@@ -92,7 +108,12 @@ CREATE TABLE `examinations` (
 --
 
 INSERT INTO `examinations` (`exam_id`, `title`, `position`, `duration`, `description`, `passing_score`, `status`, `created`) VALUES
-(1, 'TSD EXAM', 'All', 30, 'TSD EXAMINATION', 75, 'Active', '2025-06-04 06:52:26');
+(1, 'TSD', 'All', 5, 'TSD Examination', 75, 'Inactive', '2025-06-04 06:52:26'),
+(2, 'MenuFam', 'All', 30, 'MenuFam Examination', 75, 'Inactive', '2025-06-05 03:15:31'),
+(3, 'CoC', 'All', 30, 'CoC Examination', 75, 'Inactive', '2025-06-09 15:58:20'),
+(4, 'EOS', 'All', 30, 'EOS Examination', 75, 'Inactive', '2025-06-09 11:30:31'),
+(5, 'Leadership', 'All', 30, 'Leadership Examination', 75, 'Inactive', '2025-06-10 10:09:58'),
+(6, 'ODOO', 'ALL', 30, 'ODOO Examination', 75, 'Inactive', '2025-06-10 10:10:38');
 
 -- --------------------------------------------------------
 
@@ -114,37 +135,6 @@ CREATE TABLE `question` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
--- Dumping data for table `question`
---
-
-INSERT INTO `question` (`id`, `exam_id`, `question_text`, `question_type`, `option_a`, `option_b`, `option_c`, `option_d`, `correct_option`, `created_at`) VALUES
-(51, 1, '1', 'Multiple Choice', '1', '2', '3', '4', 'A', '2025-06-04 04:57:36'),
-(52, 1, '2', 'Multiple Choice', '1', '2', '3', '4', 'B', '2025-06-04 04:57:36'),
-(53, 1, '3', 'Multiple Choice', '1', '2', '3', '4', 'C', '2025-06-04 04:57:36'),
-(54, 1, '4', 'Multiple Choice', '1', '23', '3', '4', 'D', '2025-06-04 04:57:36'),
-(55, 1, '5', 'Multiple Choice', '12', '23', '23', '43', 'C', '2025-06-04 04:57:36'),
-(56, 1, '6', 'Multiple Choice', '14', '1', '14', '1', 'B', '2025-06-04 04:57:36'),
-(57, 1, '7', 'Multiple Choice', '13', '65', '665', '65', 'A', '2025-06-04 04:57:36'),
-(58, 1, '8', 'Multiple Choice', '65', '56', '65', '54', 'B', '2025-06-04 04:57:36'),
-(59, 1, '96', 'Multiple Choice', '56', '43', '5345', '345', 'B', '2025-06-04 04:57:36'),
-(60, 1, '10', 'Multiple Choice', '345', '345', '345', '34', 'C', '2025-06-04 04:57:36'),
-(61, 1, '11', 'Multiple Choice', '3345', '345', '435345', '534', 'D', '2025-06-04 04:57:36'),
-(62, 1, '12', 'Multiple Choice', '345', '34543', '345', '345', 'B', '2025-06-04 04:57:36'),
-(63, 1, '13', 'Multiple Choice', '435', '34543', '45', '543', 'B', '2025-06-04 04:57:36'),
-(64, 1, '14', 'Multiple Choice', '345', '453', '345', '3435', 'B', '2025-06-04 04:57:36'),
-(65, 1, '15', 'Multiple Choice', '45', '54', '35', '543', 'A', '2025-06-04 04:57:36'),
-(66, 1, '16', 'True/False', 'True', 'False', '213', '123', 'A', '2025-06-04 04:57:36'),
-(67, 1, '17', 'True/False', 'True', 'False', '213', '123', 'B', '2025-06-04 04:57:36'),
-(68, 1, '18', 'True/False', 'True', 'False', '123', '213', 'A', '2025-06-04 04:57:36'),
-(69, 1, '19', 'True/False', 'True', 'False', '123', '123', 'B', '2025-06-04 04:57:36'),
-(70, 1, '20', 'True/False', 'True', 'False', '123', '123', 'A', '2025-06-04 04:57:36'),
-(71, 1, '21', 'True/False', 'True', 'False', '132', '123', 'B', '2025-06-04 04:57:36'),
-(72, 1, '22', 'True/False', 'True', 'False', '123', '123', 'B', '2025-06-04 04:57:36'),
-(73, 1, '23', 'True/False', 'True', 'False', '123', '132', 'A', '2025-06-04 04:57:36'),
-(74, 1, '24', 'True/False', 'True', 'False', '123', '123', 'B', '2025-06-04 04:57:36'),
-(75, 1, '25', 'True/False', 'True', 'False', '2', '1', 'D', '2025-06-04 04:57:36');
-
---
 -- Indexes for dumped tables
 --
 
@@ -154,6 +144,12 @@ INSERT INTO `question` (`id`, `exam_id`, `question_text`, `question_type`, `opti
 ALTER TABLE `admins`
   ADD PRIMARY KEY (`id`),
   ADD UNIQUE KEY `username` (`username`);
+
+--
+-- Indexes for table `answers`
+--
+ALTER TABLE `answers`
+  ADD PRIMARY KEY (`id`);
 
 --
 -- Indexes for table `employee`
@@ -185,22 +181,28 @@ ALTER TABLE `admins`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
 
 --
+-- AUTO_INCREMENT for table `answers`
+--
+ALTER TABLE `answers`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=1437;
+
+--
 -- AUTO_INCREMENT for table `employee`
 --
 ALTER TABLE `employee`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=68;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=210;
 
 --
 -- AUTO_INCREMENT for table `examinations`
 --
 ALTER TABLE `examinations`
-  MODIFY `exam_id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=29;
+  MODIFY `exam_id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=59;
 
 --
 -- AUTO_INCREMENT for table `question`
 --
 ALTER TABLE `question`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=76;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=235;
 COMMIT;
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;

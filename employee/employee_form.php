@@ -21,7 +21,7 @@
       <form action="employee_handler.php" method="POST">
           <div class="form-group">
           <label for="employee_num">Employee Number <span class="required">*</span></label>
-          <input type="text" id="employee_num" name="employee_num" maxlength="6" required>
+          <input type="text" id="employee_num" name="employee_num" maxlength="6" oninput="this.value = this.value.replace(/[^0-9]/g, '')" required>
         </div>
         <div class="form-group">
           <label>Full Name <span class="required">*</span></label>
@@ -38,6 +38,7 @@
           <select name="position" required>
             <option value="">Select the position</option>
             <option value="Store Manager">Store Manager</option>
+            <option value="Assistant Store Manager">Assistant Store Manager</option>
             <option value="Management Trainee">Management Trainee</option>
             <option value="Admin Assistant">Admin Assistant</option>
             <option value="Dining Supervisor">Dining Supervisor</option>

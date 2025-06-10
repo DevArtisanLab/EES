@@ -4,43 +4,57 @@ if ($conn->connect_error) {
     die("Connection failed: " . $conn->connect_error);
 }
 
-// Get exam_id from URL
 $exam_id = isset($_GET['exam_id']) ? intval($_GET['exam_id']) : 0;
-
 if ($exam_id <= 0) {
     die("Invalid exam ID.");
 }
+
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
-    for ($i = 1; $i <= 25; $i++) {
-        $question = isset($_POST["question_$i"]) ? trim($_POST["question_$i"]) : '';
-        $type     = isset($_POST["type_$i"]) ? $_POST["type_$i"] : '';
-        $correct  = isset($_POST["correct_$i"]) ? $_POST["correct_$i"] : '';
+    $questions = $_POST['question'] ?? [];
+    $types = $_POST['type'] ?? [];
+    $corrects = $_POST['correct'] ?? [];
+    $optionsA = $_POST['option_A'] ?? [];
+    $optionsB = $_POST['option_B'] ?? [];
+    $optionsC = $_POST['option_C'] ?? [];
+    $optionsD = $_POST['option_D'] ?? [];
 
-        $optionA  = isset($_POST["option_{$i}_A"]) ? $_POST["option_{$i}_A"] : '';
-        $optionB  = isset($_POST["option_{$i}_B"]) ? $_POST["option_{$i}_B"] : '';
-        $optionC  = isset($_POST["option_{$i}_C"]) ? $_POST["option_{$i}_C"] : '';
-        $optionD  = isset($_POST["option_{$i}_D"]) ? $_POST["option_{$i}_D"] : '';
+    for ($i = 0; $i < count($questions); $i++) {
+        $question = trim($questions[$i]);
+        $type = $types[$i] ?? '';
+        $correct = is_array($corrects) ? trim($corrects[$i] ?? '') : trim($corrects ?? '');
 
-        if ($question === '' || $type === '' || $correct === '') {
-            // Skip this question if required fields are missing
-            continue;
+        if ($question === '' || $type === '') continue;
+
+        $requiresOptions = in_array($type, ['Multiple Choice', 'True/False']);
+        $requiresCorrect = ($type !== 'Essay');
+
+        if ($requiresCorrect && $correct === '') continue;
+
+        $optionA = $optionsA[$i] ?? null;
+        $optionB = $optionsB[$i] ?? null;
+        $optionC = $optionsC[$i] ?? null;
+        $optionD = $optionsD[$i] ?? null;
+
+        if ($requiresOptions) {
+            $stmt = $conn->prepare("INSERT INTO question (exam_id, question_text, question_type, option_a, option_b, option_c, option_d, correct_option) VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
+            $stmt->bind_param("isssssss", $exam_id, $question, $type, $optionA, $optionB, $optionC, $optionD, $correct);
+        } elseif ($requiresCorrect) {
+            $stmt = $conn->prepare("INSERT INTO question (exam_id, question_text, question_type, correct_option) VALUES (?, ?, ?, ?)");
+            $stmt->bind_param("isss", $exam_id, $question, $type, $correct);
+        } else {
+            $stmt = $conn->prepare("INSERT INTO question (exam_id, question_text, question_type) VALUES (?, ?, ?)");
+            $stmt->bind_param("iss", $exam_id, $question, $type);
         }
 
-        $stmt = $conn->prepare("
-            INSERT INTO question (exam_id, question_text, question_type, option_a, option_b, option_c, option_d, correct_option) 
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-        ");
-        $stmt->bind_param("isssssss", $exam_id, $question, $type, $optionA, $optionB, $optionC, $optionD, $correct);
         $stmt->execute();
         $stmt->close();
     }
 
-    echo "<div class='alert alert-success'>Questions saved successfully!</div>";
-    header("Location: admin_dashboard.php");
+    header("Location: admin_examinations.php");
     exit;
 }
-
 ?>
+
 <?php include 'sidebar.php' ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -50,51 +64,62 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
 </head>
 <body>
-<div class="container my-0">
-    <h3 class="mb-4">Add Examination Questions </h3>
-    <h3 class="mb-4">Examination ID: (<?= htmlspecialchars($exam_id) ?>)</h3>
+<div class="container my-4">
+    <h3 class="mb-4">Add Examination Questions</h3>
+    <h4 class="mb-4">Examination ID: <?= htmlspecialchars($exam_id) ?></h4>
     <form method="POST">
-        <?php for ($i = 1; $i <= 25; $i++): ?>
-    <div class="card mb-3">
-        <div class="card-header">Question <?= $i ?></div>
-        <div class="card-body">
-            <div class="mb-3">
-                <label>Question Text</label>
-                <textarea class="form-control" name="question_<?= $i ?>" required></textarea>
-            </div>
-            <div class="mb-3">
-                <label>Question Type</label>
-                <select class="form-select question-type" name="type_<?= $i ?>" data-index="<?= $i ?>">
-                    <option value="Multiple Choice" selected>Multiple Choice</option>
-                    <option value="True/False">True/False</option>
-                </select>
-            </div>
+        <?php for ($i = 0; $i < 6; $i++): ?>
+        <div class="card mb-3">
+            <div class="card-header">Question <?= $i + 1 ?></div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <label>Question Text</label>
+                    <textarea class="form-control" name="question[]"></textarea>
+                </div>
+                <div class="mb-3">
+                    <label>Question Type</label>
+                    <select class="form-select question-type" name="type[]" data-index="<?= $i ?>">
+                        <option value="">-- Select Type --</option>
+                        <option value="Multiple Choice">Multiple Choice</option>
+                        <option value="True/False">True/False</option>
+                        <option value="Identification">Identification</option>
+                        <option value="Enumeration">Enumeration</option>
+                        <option value="Fill in the Blanks">Fill in the Blanks</option>
+                        <option value="Essay">Essay</option>
+                    </select>
+                </div>
 
-            <div class="answer-options" id="options_<?= $i ?>">
-                <div class="form-check d-flex align-items-center mb-2">
-                    <input class="form-check-input me-2" type="radio" name="correct_<?= $i ?>" value="A" required>
-                    <label class="form-check-label me-2">A</label>
-                    <input type="text"  name="option_<?= $i ?>_A" class="form-control" placeholder="Option A" required>
+                <div class="answer-options" id="options_<?= $i ?>">
+                    <div class="form-check d-flex align-items-center mb-2">
+                        <input class="form-check-input me-2" type="radio" name="correct[<?= $i ?>]" value="A">
+                        <label class="form-check-label me-2">A</label>
+                        <input type="text" name="option_A[]" class="form-control" placeholder="Option A">
+                    </div>
+                    <div class="form-check d-flex align-items-center mb-2">
+                        <input class="form-check-input me-2" type="radio" name="correct[<?= $i ?>]" value="B">
+                        <label class="form-check-label me-2">B</label>
+                        <input type="text" name="option_B[]" class="form-control" placeholder="Option B">
+                    </div>
+                    <div class="form-check d-flex align-items-center mb-2 option-c">
+                        <input class="form-check-input me-2" type="radio" name="correct[<?= $i ?>]" value="C">
+                        <label class="form-check-label me-2">C</label>
+                        <input type="text" name="option_C[]" class="form-control" placeholder="Option C">
+                    </div>
+                    <div class="form-check d-flex align-items-center mb-2 option-d">
+                        <input class="form-check-input me-2" type="radio" name="correct[<?= $i ?>]" value="D">
+                        <label class="form-check-label me-2">D</label>
+                        <input type="text" name="option_D[]" class="form-control" placeholder="Option D">
+                    </div>
                 </div>
-                <div class="form-check d-flex align-items-center mb-2">
-                    <input class="form-check-input me-2" type="radio" name="correct_<?= $i ?>" value="B">
-                    <label class="form-check-label me-2">B</label>
-                    <input type="text"  name="option_<?= $i ?>_B" class="form-control" placeholder="Option B" required>
-                </div>
-                <div class="form-check d-flex align-items-center mb-2 option-c">
-                    <input class="form-check-input me-2" type="radio" name="correct_<?= $i ?>" value="C">
-                    <label class="form-check-label me-2">C</label>
-                    <input type="text"  name="option_<?= $i ?>_C" class="form-control" placeholder="Option C" required>
-                </div>
-                <div class="form-check d-flex align-items-center mb-2 option-d">
-                    <input class="form-check-input me-2" type="radio" name="correct_<?= $i ?>" value="D">
-                    <label class="form-check-label me-2">D</label>
-                    <input type="text" name="option_<?= $i ?>_D"  class="form-control" placeholder="Option D" required>
+
+                <div class="form-group mt-3" id="open_answer_<?= $i ?>" style="display: none;">
+                    <label>Correct Answer</label>
+                    <textarea class="form-control" name="correct[]"></textarea>
+                    <small class="form-text text-muted">Use comma-separated answers for Enumeration if needed.</small>
                 </div>
             </div>
         </div>
-    </div>
-<?php endfor; ?>
+        <?php endfor; ?>
 
         <div class="d-flex justify-content-between">
             <a href="admin_createexam.php" class="btn btn-secondary">Back</a>
@@ -108,15 +133,21 @@ document.addEventListener('DOMContentLoaded', function () {
     document.querySelectorAll('.question-type').forEach(select => {
         const index = select.dataset.index;
         const container = document.getElementById('options_' + index);
-        if (!container) return;
-
+        const openAnswer = document.getElementById('open_answer_' + index);
         const optionCWrapper = container.querySelector('.option-c');
         const optionDWrapper = container.querySelector('.option-d');
-        const optionAInput = container.querySelector('input[name="option_' + index + '_A"]');
-        const optionBInput = container.querySelector('input[name="option_' + index + '_B"]');
+        const optionAInput = container.querySelector('input[name="option_A[]"]');
+        const optionBInput = container.querySelector('input[name="option_B[]"]');
 
         const updateOptions = () => {
-            const isTF = select.value === 'True/False';
+            const type = select.value;
+            const isMC = type === 'Multiple Choice';
+            const isTF = type === 'True/False';
+            const isOpenAnswer = ['Identification', 'Enumeration', 'Fill in the Blanks'].includes(type);
+            const isEssay = type === 'Essay';
+
+            container.style.display = (isMC || isTF) ? 'block' : 'none';
+            openAnswer.style.display = isOpenAnswer ? 'block' : (isEssay ? 'none' : 'none');
 
             if (optionCWrapper) optionCWrapper.style.display = isTF ? 'none' : 'flex';
             if (optionDWrapper) optionDWrapper.style.display = isTF ? 'none' : 'flex';
@@ -125,7 +156,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 if (isTF) {
                     optionAInput.value = 'True';
                     optionBInput.value = 'False';
-                } else {
+                } else if (isMC) {
                     optionAInput.value = '';
                     optionBInput.value = '';
                 }
@@ -133,14 +164,9 @@ document.addEventListener('DOMContentLoaded', function () {
         };
 
         select.addEventListener('change', updateOptions);
-        updateOptions(); // Run once at page load
+        updateOptions();
     });
 });
-
 </script>
-
-
-
-
 </body>
 </html>

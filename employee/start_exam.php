@@ -7,7 +7,26 @@ if ($_SERVER["REQUEST_METHOD"] !== "POST") {
     $_SESSION['answers'] = [];
 }
 
-// Validate session
+// Database connection
+$conn = new mysqli("localhost", "root", "", "ees");
+if ($conn->connect_error) {
+    die("Connection failed: " . $conn->connect_error);
+}
+
+// Get active exam_id and duration (duration is stored in MINUTES in DB)
+$exam_result = $conn->query("SELECT exam_id, duration FROM examinations WHERE status = 'Active'");
+if ($exam_result && $exam_result->num_rows > 0) {
+    $exam_row = $exam_result->fetch_assoc();
+    $exam_id = $exam_row['exam_id'];
+    $exam_duration_minutes = $exam_row['duration']; // duration in minutes
+
+    $_SESSION['exam_id'] = $exam_id;
+    $_SESSION['exam_duration'] = $exam_duration_minutes * 60; // convert to seconds
+} else {
+    die("NO ACTIVE EXAMINATION YET!!.");
+}
+
+// Validate session variables (after setting them)
 if (!isset($_SESSION["full_name"], $_SESSION["start_time"], $_SESSION["exam_duration"])) {
     header("Location: employee_form.php");
     exit;
@@ -18,22 +37,6 @@ $remaining_time = ($_SESSION["start_time"] + $_SESSION["exam_duration"]) - time(
 if ($remaining_time <= 0) {
     header("Location: submit_exam.php");
     exit;
-}
-
-// Database connection
-$conn = new mysqli("localhost", "root", "", "ees");
-if ($conn->connect_error) {
-    die("Connection failed: " . $conn->connect_error);
-}
-
-// Get active exam_id
-$exam_result = $conn->query("SELECT exam_id FROM examinations WHERE status = 'Active'");
-if ($exam_result && $exam_result->num_rows > 0) {
-    $exam_row = $exam_result->fetch_assoc();
-    $exam_id = $exam_row['exam_id'];
-    $_SESSION['exam_id'] = $exam_id; // Store it in session if needed
-} else {
-    die("No active exam found.");
 }
 
 // Get total number of questions for the active exam
@@ -49,10 +52,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST['answer']) && isset($_
     $selected = $_POST['answer'];
     $question_id = $_POST['question_id'];
 
-    // Store answer and question_id in session (you can change how you want to store it)
     $_SESSION['answers'][$question_id] = $selected;
-
-    // If you want to keep current_question counter separately
     $_SESSION['current_question']++;
 
     if ($_SESSION['current_question'] >= $total_q) {
@@ -60,7 +60,6 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST['answer']) && isset($_
         exit;
     }
 }
-
 
 // Fetch current question
 $q_index = $_SESSION['current_question'];
@@ -162,19 +161,28 @@ $question = $question_result->fetch_assoc();
             <input type="hidden" name="question_id" value="<?= htmlspecialchars($question['id']) ?>">
         </p>
         <div class="options">
-            <label><input type="radio" name="answer" value="A. <?= htmlspecialchars($question['option_a']) ?>" required> <?= htmlspecialchars($question['option_a']) ?></label>
-            <label><input type="radio" name="answer" value="B. <?= htmlspecialchars($question['option_b']) ?>"> <?= htmlspecialchars($question['option_b']) ?></label>
-            <label><input type="radio" name="answer" value="C. <?= htmlspecialchars($question['option_c']) ?>"> <?= htmlspecialchars($question['option_c']) ?></label>
-            <label><input type="radio" name="answer" value="D. <?= htmlspecialchars($question['option_d']) ?>"> <?= htmlspecialchars($question['option_d']) ?></label>
-        </div>
+    <?php
+    $qtype = strtolower($question['question_type']);
+
+    if (in_array($qtype, ['identification', 'enumeration', 'fill in the blanks', 'essay'])) {
+        // Show textarea for open-ended questions
+        echo '<textarea name="answer" placeholder="Enter your answer here..." required style="width: 100%; min-height: 100px; padding: 10px; border-radius: 8px; border: 1px solid #ccc; resize: vertical;"></textarea>';
+    } else {
+        // Show radio buttons for multiple choice/true-false
+        if (!empty($question['option_a']))
+            echo '<label><input type="radio" name="answer" value="A. ' . htmlspecialchars($question['option_a']) . '" required> ' . htmlspecialchars($question['option_a']) . '</label>';
+        if (!empty($question['option_b']))
+            echo '<label><input type="radio" name="answer" value="B. ' . htmlspecialchars($question['option_b']) . '"> ' . htmlspecialchars($question['option_b']) . '</label>';
+        if (!empty($question['option_c']))
+            echo '<label><input type="radio" name="answer" value="C. ' . htmlspecialchars($question['option_c']) . '"> ' . htmlspecialchars($question['option_c']) . '</label>';
+        if (!empty($question['option_d']))
+            echo '<label><input type="radio" name="answer" value="D. ' . htmlspecialchars($question['option_d']) . '"> ' . htmlspecialchars($question['option_d']) . '</label>';
+    }
+    ?>
+</div>
+
         <button type="submit">
-            <?php
-            if ($q_index + 1 === $total_q) {
-                echo "Submit";
-            } else {
-                echo "Next";
-            }
-            ?>
+            <?= ($q_index + 1 === $total_q) ? "Submit" : "Next" ?>
         </button>
     </form>
 </div>

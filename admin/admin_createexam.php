@@ -65,7 +65,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
             <div class="mb-3">
                 <label>Description</label>
-                <textarea name="description" class="form-control" rows="3" required></textarea>
+                <textarea name="description" class="form-control" rows="3"></textarea>
             </div>
 
             <div class="row">

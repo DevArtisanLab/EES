@@ -64,7 +64,7 @@ $results = $conn->query("SELECT * FROM employee ORDER BY submitted_at DESC");
 
         <div class="p-4 border-b font-medium">Recent Examination Results</div>
         <div class="bg-white shadow rounded"><div class="toolbar">
-            <input type="text" placeholder="Search employee..." class="search-input w-1/4">
+            <!-- <input type="text" placeholder="Search employee..." class="search-input w-1/4">
             <select>
                 <option>All Positions</option>
             </select>
@@ -74,13 +74,13 @@ $results = $conn->query("SELECT * FROM employee ORDER BY submitted_at DESC");
             <select>
                 <option>Newest First</option>
             </select>
-        </div>
+        </div> -->
         <div class="overflow-x-auto">
           <table class="min-w-full text-sm text-left">
             <thead class="bg-gray-50 text-gray-700">
               <tr>
                 <th class="px-4 py-2">NAME</th>
-                <th class="px-4 py-2">EXAMINATION</th>
+                <th class="px-4 py-2">POSITION</th>
                 <th class="px-4 py-2">AVERAGE</th>
                 <th class="px-4 py-2">STATUS</th>
                 <th class="px-4 py-2">DATE</th>

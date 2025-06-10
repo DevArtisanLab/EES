@@ -2,7 +2,7 @@
 session_start();
 
 // Required session keys
-$required_keys = ["employee_num", "full_name", "branch", "position", "date_started", "date_of_exam", "answers"];
+$required_keys = ["employee_num", "full_name", "branch", "position", "date_started", "date_of_exam", "answers", "exam_id"];
 foreach ($required_keys as $key) {
     if (!isset($_SESSION[$key])) {
         die("Missing session data: $key");
@@ -17,16 +17,17 @@ $position      = $_SESSION["position"];
 $date_started  = $_SESSION["date_started"];
 $date_of_exam  = $_SESSION["date_of_exam"];
 $answers       = $_SESSION["answers"];
-$exam_id       = $_SESSION['exam_id'] ?? null;
+$exam_id       = (int)$_SESSION['exam_id'];
+
+// Validate exam_id range
+if ($exam_id < 1 || $exam_id > 10) {
+    die("Invalid exam ID. Only values 1–5 are allowed.");
+}
 
 // Database connection
 $conn = new mysqli("localhost", "root", "", "ees");
 if ($conn->connect_error) {
     die("Connection failed: " . $conn->connect_error);
-}
-
-if (!$exam_id) {
-    die("Exam ID is missing.");
 }
 
 // Fetch correct answers
@@ -61,27 +62,10 @@ foreach ($answers as $question_id => $selected_option) {
 $percentage = ($total_questions > 0) ? ($score_count / $total_questions) * 100 : 0;
 $int_score = round($percentage);
 
-// Determine which score column is empty
-$score_column = null;
-$query = "SELECT score_1, score_2, score_3, score_4, score_5 FROM employee WHERE employee_num = ?";
-$stmt = $conn->prepare($query);
-$stmt->bind_param("s", $employee_num);
-$stmt->execute();
-$result = $stmt->get_result();
-$row = $result->fetch_assoc();
-$stmt->close();
+// Dynamically build score column name (score_1, score_2, etc.)
+$score_column = "score_" . $exam_id;
 
-foreach ($row as $column => $value) {
-    if (is_null($value)) {
-        $score_column = $column;
-        break;
-    }
-}
-if (!$score_column) {
-    $score_column = "score_1"; // overwrite if all are full
-}
-
-// Update selected score column
+// Update that score column
 $update_score_sql = "UPDATE employee SET `$score_column` = ?, submitted_at = ? WHERE employee_num = ?";
 $stmt = $conn->prepare($update_score_sql);
 $stmt->bind_param("iss", $int_score, $current_time, $employee_num);
@@ -89,7 +73,7 @@ $stmt->execute();
 $stmt->close();
 
 // Re-fetch all scores and calculate average
-$stmt = $conn->prepare("SELECT score_1, score_2, score_3, score_4, score_5 FROM employee WHERE employee_num = ?");
+$stmt = $conn->prepare("SELECT score_1, score_2, score_3, score_4, score_5, score_6, score_7, score_8, score_9, score_10  FROM employee WHERE employee_num = ?");
 $stmt->bind_param("s", $employee_num);
 $stmt->execute();
 $result = $stmt->get_result();
@@ -108,7 +92,7 @@ $average = ($count > 0) ? ($sum / $count) : 0;
 $average_rounded = round($average, 2);
 $status = ($average >= 75) ? "Passed" : "Failed";
 
-// ✅ Update status and average column
+// Update status and average
 $stmt = $conn->prepare("UPDATE employee SET status = ?, average = ? WHERE employee_num = ?");
 $stmt->bind_param("sds", $status, $average_rounded, $employee_num);
 $stmt->execute();
