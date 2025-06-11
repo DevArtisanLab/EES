@@ -47,8 +47,8 @@
     <div class="sidebar">
         <div class="title">Admin Dashboard</div>
         <a href="admin_dashboard.php" class="nav-link"><i class="bi bi-speedometer2"></i> Dashboard</a>
-        <a href="admin_employee.php" class="nav-link"><i class="bi bi-people-fill"></i> Employee</a>
-        <a href="admin_examinations.php" class="nav-link"><i class="bi bi-clipboard-data"></i> Examinations</a>
+        <a href="admin_employee.php" class="nav-link"><i class="bi bi-people-fill"></i> Examination</a>
+        <a href="admin_examinations.php" class="nav-link"><i class="bi bi-clipboard-data"></i> Exams</a>
         <!-- <a href="admin_upload.php" class="nav-link"><i class="bi bi-file-earmark-arrow-up"></i> Upload Documents</a> -->
         <a href="admin_reports.php" class="nav-link"><i class="bi bi-journal-text"></i> Reports</a>
         <!-- <a href="admin_settings.php" class="nav-link"><i class="bi bi-gear-fill"></i> Settings</a> -->

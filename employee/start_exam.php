@@ -72,6 +72,7 @@ $question = $question_result->fetch_assoc();
 <head>
     <meta charset="UTF-8">
     <title>Assessment Test</title>
+    
     <style>
         body {
             background-color: #f9fafb;
