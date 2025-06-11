@@ -19,73 +19,123 @@ $date_of_exam  = $_SESSION["date_of_exam"];
 $answers       = $_SESSION["answers"];
 $exam_id       = (int)$_SESSION['exam_id'];
 
-// Validate exam_id range
 if ($exam_id < 1 || $exam_id > 10) {
     die("Invalid exam ID. Only values 1–10 are allowed.");
 }
 
-// Database connection
+// DB connection
 $conn = new mysqli("localhost", "root", "", "ees");
 if ($conn->connect_error) {
     die("Connection failed: " . $conn->connect_error);
 }
 
-// Fetch correct answers for this exam
+// Fetch correct answers and types
 $correct_answers = [];
-$stmt = $conn->prepare("SELECT id, correct_option FROM question WHERE exam_id = ?");
+$question_types = [];
+$stmt = $conn->prepare("SELECT id, correct_option, question_type FROM question WHERE exam_id = ?");
 $stmt->bind_param("i", $exam_id);
 $stmt->execute();
 $result = $stmt->get_result();
 while ($row = $result->fetch_assoc()) {
-    $correct_answers[$row['id']] = strtoupper(trim($row['correct_option']));
+    $qid = $row['id'];
+    $correct_answers[$qid] = $row['correct_option'];
+    $question_types[$qid] = strtolower($row['question_type']);
 }
 $stmt->close();
 
 $score_count = 0;
-$total_questions = count($correct_answers);
+$total_points_possible = 0;
 $current_time = date('Y-m-d H:i:s');
 
-// Insert answers and count score
-foreach ($answers as $question_id => $selected_option) {
-    $parsed_letter = strtoupper(substr(trim($selected_option), 0, 1));
-    $is_correct = isset($correct_answers[$question_id]) && $correct_answers[$question_id] === $parsed_letter ? 1 : 0;
-    $score_count += $is_correct;
+// Score each answer
+foreach ($answers as $question_id => $user_answer) {
+    $full_answer = trim($user_answer);
+    $type = strtolower($question_types[$question_id] ?? 'multiple choice');
+    $correct_option = trim($correct_answers[$question_id] ?? '');
+    $parsed_letter = strtoupper(substr($full_answer, 0, 1));
+    $selected_option = '';
+    $is_correct = 0;
 
-    $stmt = $conn->prepare("INSERT INTO answers (employee_num, exam_id, selected_option, is_correct, answered_at) VALUES (?, ?, ?, ?, ?)");
-    $stmt->bind_param("sissi", $employee_num, $exam_id, $parsed_letter, $is_correct, $current_time);
+    switch ($type) {
+        case 'multiple choice':
+        case 'true/false':
+            $selected_option = $parsed_letter;
+            $total_points_possible += 1;
+            if (strtoupper($correct_option) === $selected_option) {
+                $is_correct = 1;
+                $score_count++;
+            }
+            break;
+
+        case 'identification':
+        case 'fill in the blanks':
+            $selected_option = '';
+            $total_points_possible += 1;
+            if (strtolower($full_answer) === strtolower($correct_option)) {
+                $is_correct = 1;
+                $score_count++;
+            }
+            break;
+
+        case 'enumeration':
+            $selected_option = '';
+            $user_items = array_filter(array_map('trim', explode(',', strtolower($full_answer))));
+            $correct_items = array_filter(array_map('trim', explode(',', strtolower($correct_option))));
+            $user_items = array_unique($user_items);
+            $correct_items = array_unique($correct_items);
+
+            $matches = array_intersect($user_items, $correct_items);
+            $match_count = count($matches);
+
+            $is_correct = ($match_count > 0) ? 1 : 0;
+            $score_count += $match_count;
+            $total_points_possible += count($correct_items); // Add all possible correct points
+            break;
+
+        default:
+            $selected_option = '';
+            break;
+    }
+
+    // Save each answer
+    $stmt = $conn->prepare("INSERT INTO answers (employee_num, exam_id, question_id, selected_option, full_answer, is_correct, answered_at) VALUES (?, ?, ?, ?, ?, ?, ?)");
+    $stmt->bind_param("siissis", $employee_num, $exam_id, $question_id, $selected_option, $full_answer, $is_correct, $current_time);
     $stmt->execute();
     $stmt->close();
 }
 
-// Save raw score
+// Save raw score to DB
 $raw_score = $score_count;
-
-// Save raw score to specific column
 $score_column = "score_" . $exam_id;
-$update_score_sql = "UPDATE employee SET `$score_column` = ?, submitted_at = ? WHERE employee_num = ?";
-$stmt = $conn->prepare($update_score_sql);
+$stmt = $conn->prepare("UPDATE employee SET `$score_column` = ?, submitted_at = ? WHERE employee_num = ?");
 $stmt->bind_param("iss", $raw_score, $current_time, $employee_num);
 $stmt->execute();
 $stmt->close();
 
-// Calculate average percentage score
+// Recalculate average
 $total_percentage = 0;
 $exams_taken = 0;
 
 for ($i = 1; $i <= 10; $i++) {
-    // Get total questions for each exam
-    $stmt = $conn->prepare("SELECT COUNT(*) AS total FROM question WHERE exam_id = ?");
+    $stmt = $conn->prepare("SELECT id, correct_option, question_type FROM question WHERE exam_id = ?");
     $stmt->bind_param("i", $i);
     $stmt->execute();
     $result = $stmt->get_result();
-    $question_row = $result->fetch_assoc();
+
+    $total_possible = 0;
+    while ($row = $result->fetch_assoc()) {
+        $type = strtolower($row['question_type']);
+        if ($type === 'enumeration') {
+            $items = array_filter(array_map('trim', explode(',', strtolower($row['correct_option']))));
+            $total_possible += count($items);
+        } else {
+            $total_possible += 1;
+        }
+    }
     $stmt->close();
 
-    $total_qs = (int)$question_row['total'];
-
-    if ($total_qs > 0) {
-        // Get employee raw score
-        $col = "score_$i";
+    if ($total_possible > 0) {
+        $col = "score_" . $i;
         $stmt = $conn->prepare("SELECT `$col` FROM employee WHERE employee_num = ?");
         $stmt->bind_param("s", $employee_num);
         $stmt->execute();
@@ -95,21 +145,18 @@ for ($i = 1; $i <= 10; $i++) {
 
         $raw = $score_row[$col];
         if (!is_null($raw)) {
-            $percentage = ($raw / $total_qs) * 100;
+            $percentage = ($raw / $total_possible) * 100;
             $total_percentage += $percentage;
             $exams_taken++;
         }
     }
 }
 
-// Compute average percentage
 $average_percentage = ($exams_taken > 0) ? ($total_percentage / $exams_taken) : 0;
 $average_rounded = round($average_percentage, 2);
-
-// Status: passed if average >= 75
 $status = ($average_percentage >= 75) ? "Passed" : "Failed";
 
-// Update employee average and status
+// Update final employee status
 $stmt = $conn->prepare("UPDATE employee SET status = ?, average = ? WHERE employee_num = ?");
 $stmt->bind_param("sds", $status, $average_rounded, $employee_num);
 $stmt->execute();
@@ -120,6 +167,8 @@ unset($_SESSION["answers"], $_SESSION["start_time"], $_SESSION["exam_duration"])
 $conn->close();
 ?>
 
+
+<!-- Confirmation Page -->
 <!DOCTYPE html>
 <html lang="en">
 <head>

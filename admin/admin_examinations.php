@@ -134,6 +134,12 @@ include 'sidebar.php';
 <div class="container-fluid p-4">
     <div class="d-flex justify-content-between align-items-center mb-4">
         <h2>Examinations Management</h2>
+        <!-- Inside .d-flex ... -->   
+        <form action="import_exam.php" method="POST" enctype="multipart/form-data">
+    <input type="file" name="excel_file" required>
+    <button class="btn btn-success" id="btnImport" type="submit">📥 Import Exam</button>
+</form>
+ 
         <a href="admin_createexam.php" class="btn btn-primary" id="btnCreate">+ Create Exam</a>
     </div>
 
@@ -162,8 +168,8 @@ include 'sidebar.php';
                     <td><?= $row['created'] ?></td>
                     <td><span class="status-active"><?= $row['status'] ?></span></td>
                     <td class="action-btns">
-                        <a href="view_exam.php?id=<?= $row['exam_id'] ?>" class="btn btn-outline-primary">View</a>
-                        <a href="edit_exam.php?id=<?= $row['exam_id'] ?>" class="btn btn-outline-success">Edit</a>
+                        <a href="admin_editexam.php?id=<?= $row['exam_id'] ?>" class="btn btn-outline-primary">View</a>
+                        <a href="admin_editquestion.php?id=<?= $row['exam_id'] ?>" class="btn btn-outline-success">Edit</a>
                         <a href="delete_exam.php?id=<?= $row['exam_id'] ?>" class="btn btn-outline-danger" onclick="return confirm('Are you sure?')">Delete</a>
                     </td>
                 </tr>

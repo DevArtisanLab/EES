@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Jun 10, 2025 at 10:07 AM
+-- Generation Time: Jun 11, 2025 at 09:34 AM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -51,10 +51,11 @@ CREATE TABLE `answers` (
   `id` int(11) NOT NULL,
   `employee_num` int(11) NOT NULL,
   `exam_id` int(11) NOT NULL,
-  `selected_option` varchar(1) NOT NULL,
+  `selected_option` varchar(255) DEFAULT NULL,
   `is_correct` tinyint(1) DEFAULT NULL,
   `answered_at` datetime NOT NULL DEFAULT current_timestamp(),
-  `question_id` int(11) NOT NULL
+  `question_id` int(11) NOT NULL,
+  `full_answer` text DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- --------------------------------------------------------
@@ -108,12 +109,12 @@ CREATE TABLE `examinations` (
 --
 
 INSERT INTO `examinations` (`exam_id`, `title`, `position`, `duration`, `description`, `passing_score`, `status`, `created`) VALUES
-(1, 'TSD', 'All', 5, 'TSD Examination', 75, 'Inactive', '2025-06-04 06:52:26'),
+(1, 'TSD', 'All', 30, 'TSD Examination', 75, 'Active', '2025-06-04 06:52:26'),
 (2, 'MenuFam', 'All', 30, 'MenuFam Examination', 75, 'Inactive', '2025-06-05 03:15:31'),
 (3, 'CoC', 'All', 30, 'CoC Examination', 75, 'Inactive', '2025-06-09 15:58:20'),
 (4, 'EOS', 'All', 30, 'EOS Examination', 75, 'Inactive', '2025-06-09 11:30:31'),
 (5, 'Leadership', 'All', 30, 'Leadership Examination', 75, 'Inactive', '2025-06-10 10:09:58'),
-(6, 'ODOO', 'ALL', 30, 'ODOO Examination', 75, 'Inactive', '2025-06-10 10:10:38');
+(6, 'ODOO', 'All', 30, 'ODOO Examination', 75, 'Inactive', '2025-06-10 10:10:38');
 
 -- --------------------------------------------------------
 
@@ -130,7 +131,7 @@ CREATE TABLE `question` (
   `option_b` text DEFAULT NULL,
   `option_c` text DEFAULT NULL,
   `option_d` text DEFAULT NULL,
-  `correct_option` varchar(5) NOT NULL,
+  `correct_option` varchar(255) DEFAULT NULL,
   `created_at` timestamp NOT NULL DEFAULT current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
@@ -178,31 +179,31 @@ ALTER TABLE `question`
 -- AUTO_INCREMENT for table `admins`
 --
 ALTER TABLE `admins`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
 
 --
 -- AUTO_INCREMENT for table `answers`
 --
 ALTER TABLE `answers`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=1437;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
 
 --
 -- AUTO_INCREMENT for table `employee`
 --
 ALTER TABLE `employee`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=210;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
 
 --
 -- AUTO_INCREMENT for table `examinations`
 --
 ALTER TABLE `examinations`
-  MODIFY `exam_id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=59;
+  MODIFY `exam_id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=8;
 
 --
 -- AUTO_INCREMENT for table `question`
 --
 ALTER TABLE `question`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=235;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=450;
 COMMIT;
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
