@@ -1,4 +1,3 @@
-
 <?php
 $conn = new mysqli("localhost", "root", "", "ees");
 if ($conn->connect_error) {
@@ -18,7 +17,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                    VALUES ('$title', '$position', $duration, '$description', $passing_score, '$status', '$created')";
 
     if ($conn->query($insert_sql) === TRUE) {
-        $exam_id = $conn->insert_id;  // Get last inserted exam ID
+        $exam_id = $conn->insert_id;
         header("Location: admin_createquestion.php?exam_id=" . $exam_id);
         exit();
     } else {
@@ -26,25 +25,92 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 }
 ?>
-<?php include 'sidebar.php' ?>
+
 <!DOCTYPE html>
 <html>
 <head>
     <title>Create Examination</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            margin: 0;
+            background-color: #f8f9fa;
+        }
+        .d-flex {
+            display: flex;
+        }
+        .sidebar {
+            width: 250px;
+            height: 100vh;
+            background-color: #ffffff;
+            border-right: 1px solid #e5e5e5;
+            padding: 20px;
+            position: fixed;
+            top: 0;
+            left: 0;
+        }
+        .sidebar .title {
+            color: #2563eb;
+            font-size: 20px;
+            font-weight: bold;
+            margin-bottom: 30px;
+        }
+        .sidebar .nav-link {
+            color: #374151;
+            font-size: 14px;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            text-decoration: none;
+        }
+        .sidebar .nav-link:hover,
+        .sidebar .nav-link.active {
+            background-color: #eef2ff;
+            border-radius: 8px;
+            color: #2563eb;
+            font-weight: 500;
+        }
+        .sidebar .nav-link i {
+            margin-right: 10px;
+            font-size: 16px;
+        }
+        .main-content {
+            margin-left: 250px;
+            padding: 30px;
+            width: calc(100% - 250px);
+        }
+        h2 {
+            font-weight: 600;
+            font-size: 1.5rem;
+        }
+        .form-label {
+            font-weight: 500;
+        }
+        .btn-primary {
+            background-color: #0d6efd;
+        }
+        .btn-primary:hover {
+            background-color: #0b5ed7;
+        }
+    </style>
 </head>
-<body class="bg-light p-4">
-    <div class="container">
+<body>
+<div class="d-flex">
+    <?php include 'sidebar.php'; ?>
+
+    <div class="main-content">
         <h2 class="mb-4">Create New Examination</h2>
         <form method="POST" action="">
             <div class="mb-3">
-                <label>Examination Title</label>
+                <label class="form-label">Examination Title</label>
                 <input type="text" name="title" class="form-control" required>
             </div>
 
             <div class="row">
                 <div class="mb-3 col">
-                    <label>Position</label>
+                    <label class="form-label">Position</label>
                     <select name="position" class="form-select" required>
                         <option value="" disabled selected>Select Department</option>
                         <option value="All">All</option>
@@ -58,27 +124,27 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     </select>
                 </div>
                 <div class="mb-3 col">
-                    <label>Duration (minutes)</label>
+                    <label class="form-label">Duration (minutes)</label>
                     <input type="number" name="duration" class="form-control" value="60" required>
                 </div>
             </div>
 
             <div class="mb-3">
-                <label>Description</label>
+                <label class="form-label">Description</label>
                 <textarea name="description" class="form-control" rows="3"></textarea>
             </div>
 
             <div class="row">
                 <div class="mb-3 col">
-                    <label>Passing Score (%)</label>
+                    <label class="form-label">Passing Score (%)</label>
                     <input type="number" name="passing_score" class="form-control" value="75" required>
                 </div>
                 <div class="mb-3 col">
-                    <label>Status</label>
+                    <label class="form-label">Status</label>
                     <select name="status" class="form-select" required>
                         <option value="" disabled selected>Select Status</option>
                         <option value="Active">Active</option>
-                          <option value="Inactive">Inactive</option>
+                        <option value="Inactive">Inactive</option>
                     </select>
                 </div>
             </div>
@@ -89,5 +155,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             </div>
         </form>
     </div>
+</div>
 </body>
 </html>

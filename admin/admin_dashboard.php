@@ -14,7 +14,7 @@ if ($conn->connect_error) {
 $total = $conn->query("SELECT COUNT(*) as count FROM employee")->fetch_assoc()['count'];
 $passed = $conn->query("SELECT COUNT(*) as count FROM employee WHERE status = 'Passed'")->fetch_assoc()['count'];
 $failed = $conn->query("SELECT COUNT(*) as count FROM employee WHERE status = 'Failed'")->fetch_assoc()['count'];
-$pending = $conn->query("SELECT COUNT(*) as count FROM employee WHERE status = 'Pending'")->fetch_assoc()['count'];
+$pending = $conn->query("SELECT COUNT(*) as count FROM employee WHERE status IS NULL AND average IS NULL")->fetch_assoc()['count'];
 
 // Pass rate (only based on completed exams)
 $completed = $passed + $failed;
@@ -22,6 +22,86 @@ $pass_rate = $completed > 0 ? round(($passed / $completed) * 100, 2) : 0;
 
 // Fetch employee results
 $results = $conn->query("SELECT * FROM employee ORDER BY submitted_at DESC");
+
+// Difficulty chart
+$difficultyData = [];
+$difficultyQuery = $conn->query("
+  SELECT question_id,
+         COUNT(*) AS total_attempts,
+         SUM(CASE WHEN is_correct = 0 THEN 1 ELSE 0 END) AS incorrect_count
+  FROM answers
+  GROUP BY question_id
+");
+
+while ($row = $difficultyQuery->fetch_assoc()) {
+  if ($row['incorrect_count'] == 0) continue;
+  $questionId = 'Q-' . $row['question_id'];
+  $incorrectRate = round(($row['incorrect_count'] / $row['total_attempts']) * 100, 2);
+  $difficultyData[$questionId] = $incorrectRate;
+}
+
+// Sort by incorrect rate descending
+arsort($difficultyData);
+
+// Limit to top 10
+$difficultyData = array_slice($difficultyData, 0, 10, true);
+
+// Fetch exam titles from `examinations` and match to score_1 to score_10
+$examTitles = [];
+$titleQuery = $conn->query("SELECT exam_id, title FROM examinations ORDER BY exam_id ASC LIMIT 10");
+while ($row = $titleQuery->fetch_assoc()) {
+  $examTitles[intval($row['exam_id'])] = $row['title'];
+}
+
+// Initialize labels and score accumulators
+$examLabels = [];
+$examScores = array_fill(0, 10, ['sum' => 0, 'count' => 0]);
+
+// Get employee exam scores
+$examQuery = $conn->query("SELECT score_1, score_2, score_3, score_4, score_5, score_6, score_7, score_8, score_9, score_10 FROM employee WHERE status IN ('Passed', 'Failed')");
+while ($row = $examQuery->fetch_assoc()) {
+  for ($i = 0; $i < 10; $i++) {
+    $score = floatval($row["score_" . ($i + 1)]);
+    if ($score !== null && $score > 0) {
+      $examScores[$i]['sum'] += $score;
+      $examScores[$i]['count'] += 1;
+    }
+  }
+}
+
+// Prepare labels and averages
+$examAverages = [];
+for ($i = 0; $i < 10; $i++) {
+  $examLabels[] = isset($examTitles[$i + 1]) ? $examTitles[$i + 1] : "Exam " . ($i + 1);
+  $data = $examScores[$i];
+  $average = $data['count'] > 0 ? round(($data['sum'] / $data['count']), 2) : 0;
+  $examAverages[] = $average;
+}
+
+// Pass rates per position (low-passing)
+$positionRates = [];
+$positionQuery = $conn->query("SELECT position, status FROM employee");
+$positionStats = [];
+
+while ($row = $positionQuery->fetch_assoc()) {
+  $pos = $row['position'];
+  $status = $row['status'];
+
+  if (!isset($positionStats[$pos])) {
+    $positionStats[$pos] = ['total' => 0, 'passed' => 0];
+  }
+
+  $positionStats[$pos]['total']++;
+  if ($status === 'Passed') {
+    $positionStats[$pos]['passed']++;
+  }
+}
+
+foreach ($positionStats as $pos => $data) {
+  $rate = ($data['total'] > 0) ? round(($data['passed'] / $data['total']) * 100, 2) : 0;
+  $positionRates[$pos] = $rate;
+}
+asort($positionRates);
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -34,30 +114,26 @@ $results = $conn->query("SELECT * FROM employee ORDER BY submitted_at DESC");
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
-        body {
-            font-family: "Segoe UI", sans-serif;
-            background-color: #f8f9fa;
-            padding: 20px;
-        }
-        .card {
-            border-radius: 12px;
-        }
-        .card h5 {
-            font-size: 16px;
-            margin-bottom: 0.5rem;
-        }
-        .card .display-6 {
-            font-size: 32px;
-            font-weight: 600;
-        }
-        .chart-container {
-            width: 100%;
-            height: 300px;
-        }
-        .table img {
-            max-width: 100%;
-            border-radius: 12px;
-        }
+    body {
+      font-family: "Segoe UI", sans-serif;
+      background-color: #f8f9fa;
+      padding: 20px;
+    }
+    .card {
+      border-radius: 12px;
+    }
+    .card h5 {
+      font-size: 16px;
+      margin-bottom: 0.5rem;
+    }
+    .card .display-6 {
+      font-size: 32px;
+      font-weight: 600;
+    }
+    .chart-container {
+      width: 100%;
+      height: 300px;
+    }
   </style>
 </head>
 <body class="bg-gray-100 font-sans">
@@ -68,7 +144,6 @@ $results = $conn->query("SELECT * FROM employee ORDER BY submitted_at DESC");
         <h1 class="text-2xl font-semibold">Dashboard</h1>
       </div>
 
-      <!-- Stats Cards -->
       <div class="grid grid-cols-1 sm:grid-cols-4 gap-4 mb-6">
         <div class="bg-white p-4 rounded shadow">
           <div class="text-sm text-gray-500">Total Employees</div>
@@ -87,7 +162,7 @@ $results = $conn->query("SELECT * FROM employee ORDER BY submitted_at DESC");
           <div class="text-2xl font-bold"><?= $pending ?></div>
         </div>
       </div>
-      
+
       <div class="row mb-4">
         <div class="col-md-6">
           <div class="card p-3">
@@ -119,14 +194,28 @@ $results = $conn->query("SELECT * FROM employee ORDER BY submitted_at DESC");
         </div>
         <div class="col-md-6">
           <div class="card p-3">
-            <h5>Low-Passing Examination Questions</h5>
-            <img src="/mnt/data/3b838d46-bf03-4613-91e8-9cfa080c0c16.png" alt="Low-Passing Examination Questions Table">
+            <h5>Low-Passing Examination Questions (by Position)</h5>
+            <table class="table table-bordered mt-3">
+              <thead class="table-light">
+                <tr>
+                  <th>Position</th>
+                  <th>Pass Rate (%)</th>
+                </tr>
+              </thead>
+              <tbody>
+                <?php foreach ($positionRates as $position => $rate): ?>
+                  <tr>
+                    <td><?= htmlspecialchars($position) ?></td>
+                    <td><?= $rate ?>%</td>
+                  </tr>
+                <?php endforeach; ?>
+              </tbody>
+            </table>
           </div>
         </div>
       </div>
 
       <script>
-        // Pie Chart - Live Data
         const pieCtx = document.getElementById('pieChart').getContext('2d');
         new Chart(pieCtx, {
           type: 'pie',
@@ -137,60 +226,41 @@ $results = $conn->query("SELECT * FROM employee ORDER BY submitted_at DESC");
               backgroundColor: ['#28a745', '#dc3545', '#ffc107']
             }]
           },
-          options: {
-            responsive: true,
-            plugins: {
-              legend: {
-                position: 'top'
-              }
-            }
-          }
+          options: { responsive: true, plugins: { legend: { position: 'top' } } }
         });
 
-        // Bar Chart - Sample Static Data
         const barCtx = document.getElementById('barChart').getContext('2d');
         new Chart(barCtx, {
           type: 'bar',
           data: {
-            labels: ['Software Dev', 'Data Analyst', 'Network Eng', 'UI/UX', 'DevOps'],
+            labels: <?= json_encode($examLabels) ?>,
             datasets: [{
-              label: 'Pass Rate (%)',
-              data: [85, 88, 75, 92, 78],
+              label: 'Average Score (%)',
+              data: <?= json_encode($examAverages) ?>,
               backgroundColor: '#0d6efd'
             }]
           },
           options: {
             responsive: true,
-            scales: {
-              y: {
-                beginAtZero: true,
-                max: 100
-              }
-            }
+            scales: { y: { beginAtZero: true, max: 100 } }
           }
         });
 
-        // Horizontal Bar Chart - Sample Static Data
         const hBarCtx = document.getElementById('horizontalBarChart').getContext('2d');
         new Chart(hBarCtx, {
           type: 'bar',
           data: {
-            labels: ['Q-1023', 'Q-0458', 'Q-2198', 'Q-0871', 'Q-1156'],
+            labels: <?= json_encode(array_keys($difficultyData)) ?>,
             datasets: [{
-              label: 'Pass Rate (%)',
-              data: [35, 28, 40, 45, 30],
+              label: 'Incorrect Answer Rate (%)',
+              data: <?= json_encode(array_values($difficultyData)) ?>,
               backgroundColor: '#dc3545'
             }]
           },
           options: {
             indexAxis: 'y',
             responsive: true,
-            scales: {
-              x: {
-                beginAtZero: true,
-                max: 100
-              }
-            }
+            scales: { x: { beginAtZero: true, max: 100 } }
           }
         });
       </script>

@@ -51,9 +51,82 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <head>
     <title>Edit Exam</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            margin: 0;
+            background-color: #f8f9fa;
+        }
+
+        .d-flex {
+            display: flex;
+        }
+
+        .sidebar {
+            width: 250px;
+            height: 100vh;
+            background-color: #ffffff;
+            border-right: 1px solid #e5e5e5;
+            padding: 20px;
+            position: fixed;
+            top: 0;
+            left: 0;
+        }
+
+        .sidebar .title {
+            color: #2563eb;
+            font-size: 20px;
+            font-weight: bold;
+            margin-bottom: 30px;
+        }
+
+        .sidebar .nav-link {
+            color: #374151;
+            font-size: 14px;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            text-decoration: none;
+        }
+
+        .sidebar .nav-link:hover,
+        .sidebar .nav-link.active {
+            background-color: #eef2ff;
+            border-radius: 8px;
+            color: #2563eb;
+            font-weight: 500;
+        }
+
+        .sidebar .nav-link i {
+            margin-right: 10px;
+            font-size: 16px;
+        }
+
+        .main-content {
+            margin-left: 250px;
+            padding: 40px;
+            width: calc(100% - 250px);
+        }
+
+        .form-control, .form-select {
+            border-radius: 10px;
+        }
+
+        .btn {
+            border-radius: 10px;
+        }
+
+        .form-label {
+            font-weight: 500;
+        }
+    </style>
 </head>
-<body class="bg-light">
-    <div class="container py-5">
+<body>
+<div class="d-flex">
+    <?php include 'sidebar.php'; ?>
+
+    <div class="main-content">
         <div class="bg-white rounded shadow p-4">
             <h2 class="mb-4 text-primary">Edit Examination</h2>
             <form method="POST">
@@ -94,7 +167,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             </form>
         </div>
     </div>
-</body>
-</html>
+</div>
 
 <?php $conn->close(); ?>
+</body>
+</html>

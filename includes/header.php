@@ -87,7 +87,7 @@
 <body>
 
 <header>
-  <h1>Empployee Examination System</h1>
+  <h1>Employee Examination System</h1>
   <button class="login-link" id="loginTrigger">Login</button>
 </header>
 

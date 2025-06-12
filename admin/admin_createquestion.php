@@ -55,77 +55,112 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 }
 ?>
 
-<?php include 'sidebar.php' ?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <title>Add Examination Questions</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            margin: 0;
+            background-color: #f8f9fa;
+            font-family: 'Segoe UI', sans-serif;
+        }
+        .d-flex {
+            display: flex;
+        }
+        .sidebar {
+            width: 250px;
+            height: 100vh;
+            background-color: #fff;
+            border-right: 1px solid #e5e5e5;
+            position: fixed;
+            top: 0;
+            left: 0;
+            padding: 20px;
+        }
+        .main-content {
+            margin-left: 250px;
+            padding: 30px;
+            width: calc(100% - 250px);
+        }
+        .form-label {
+            font-weight: 500;
+        }
+        .card-header {
+            background-color: #eef2ff;
+            font-weight: bold;
+        }
+    </style>
 </head>
 <body>
-<div class="container my-4">
-    <h3 class="mb-4">Add Examination Questions</h3>
-    <h4 class="mb-4">Examination ID: <?= htmlspecialchars($exam_id) ?></h4>
-    <form method="POST">
-        <?php for ($i = 0; $i < 6; $i++): ?>
-        <div class="card mb-3">
-            <div class="card-header">Question <?= $i + 1 ?></div>
-            <div class="card-body">
-                <div class="mb-3">
-                    <label>Question Text</label>
-                    <textarea class="form-control" name="question[]"></textarea>
-                </div>
-                <div class="mb-3">
-                    <label>Question Type</label>
-                    <select class="form-select question-type" name="type[]" data-index="<?= $i ?>">
-                        <option value="">-- Select Type --</option>
-                        <option value="Multiple Choice">Multiple Choice</option>
-                        <option value="True/False">True/False</option>
-                        <option value="Identification">Identification</option>
-                        <option value="Enumeration">Enumeration</option>
-                        <option value="Fill in the Blanks">Fill in the Blanks</option>
-                        <option value="Essay">Essay</option>
-                    </select>
-                </div>
+<div class="d-flex">
+    <?php include 'sidebar.php'; ?>
 
-                <div class="answer-options" id="options_<?= $i ?>">
-                    <div class="form-check d-flex align-items-center mb-2">
-                        <input class="form-check-input me-2" type="radio" name="correct[<?= $i ?>]" value="A">
-                        <label class="form-check-label me-2">A</label>
-                        <input type="text" name="option_A[]" class="form-control" placeholder="Option A">
+    <div class="main-content">
+        <h3 class="mb-4">Add Examination Questions</h3>
+        <h5 class="mb-4 text-muted" hidden>Examination ID: <?= htmlspecialchars($exam_id) ?></h5>
+        <form method="POST">
+            <?php for ($i = 0; $i < 6; $i++): ?>
+            <div class="card mb-3">
+                <div class="card-header">Question <?= $i + 1 ?></div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <label class="form-label">Question Text</label>
+                        <textarea class="form-control" name="question[]"></textarea>
                     </div>
-                    <div class="form-check d-flex align-items-center mb-2">
-                        <input class="form-check-input me-2" type="radio" name="correct[<?= $i ?>]" value="B">
-                        <label class="form-check-label me-2">B</label>
-                        <input type="text" name="option_B[]" class="form-control" placeholder="Option B">
+                    <div class="mb-3">
+                        <label class="form-label">Question Type</label>
+                        <select class="form-select question-type" name="type[]" data-index="<?= $i ?>">
+                            <option value="">-- Select Type --</option>
+                            <option value="Multiple Choice">Multiple Choice</option>
+                            <option value="True/False">True/False</option>
+                            <option value="Identification">Identification</option>
+                            <option value="Enumeration">Enumeration</option>
+                            <option value="Fill in the Blanks">Fill in the Blanks</option>
+                            <option value="Essay">Essay</option>
+                        </select>
                     </div>
-                    <div class="form-check d-flex align-items-center mb-2 option-c">
-                        <input class="form-check-input me-2" type="radio" name="correct[<?= $i ?>]" value="C">
-                        <label class="form-check-label me-2">C</label>
-                        <input type="text" name="option_C[]" class="form-control" placeholder="Option C">
-                    </div>
-                    <div class="form-check d-flex align-items-center mb-2 option-d">
-                        <input class="form-check-input me-2" type="radio" name="correct[<?= $i ?>]" value="D">
-                        <label class="form-check-label me-2">D</label>
-                        <input type="text" name="option_D[]" class="form-control" placeholder="Option D">
-                    </div>
-                </div>
 
-                <div class="form-group mt-3" id="open_answer_<?= $i ?>" style="display: none;">
-                    <label>Correct Answer</label>
-                    <textarea class="form-control" name="correct[]"></textarea>
-                    <small class="form-text text-muted">Use comma-separated answers for Enumeration if needed.</small>
+                    <div class="answer-options" id="options_<?= $i ?>">
+                        <div class="form-check d-flex align-items-center mb-2">
+                            <input class="form-check-input me-2" type="radio" name="correct[<?= $i ?>]" value="A">
+                            <label class="form-check-label me-2">A</label>
+                            <input type="text" name="option_A[]" class="form-control" placeholder="Option A">
+                        </div>
+                        <div class="form-check d-flex align-items-center mb-2">
+                            <input class="form-check-input me-2" type="radio" name="correct[<?= $i ?>]" value="B">
+                            <label class="form-check-label me-2">B</label>
+                            <input type="text" name="option_B[]" class="form-control" placeholder="Option B">
+                        </div>
+                        <div class="form-check d-flex align-items-center mb-2 option-c">
+                            <input class="form-check-input me-2" type="radio" name="correct[<?= $i ?>]" value="C">
+                            <label class="form-check-label me-2">C</label>
+                            <input type="text" name="option_C[]" class="form-control" placeholder="Option C">
+                        </div>
+                        <div class="form-check d-flex align-items-center mb-2 option-d">
+                            <input class="form-check-input me-2" type="radio" name="correct[<?= $i ?>]" value="D">
+                            <label class="form-check-label me-2">D</label>
+                            <input type="text" name="option_D[]" class="form-control" placeholder="Option D">
+                        </div>
+                    </div>
+
+                    <div class="form-group mt-3" id="open_answer_<?= $i ?>" style="display: none;">
+                        <label class="form-label">Correct Answer</label>
+                        <textarea class="form-control" name="correct[]"></textarea>
+                        <small class="form-text text-muted">For Enumeration, separate answers with commas.</small>
+                    </div>
                 </div>
             </div>
-        </div>
-        <?php endfor; ?>
+            <?php endfor; ?>
 
-        <div class="d-flex justify-content-between">
-            <a href="admin_createexam.php" class="btn btn-secondary">Back</a>
-            <button type="submit" class="btn btn-primary">Save Questions</button>
-        </div>
-    </form>
+            <div class="d-flex justify-content-between">
+                <a href="admin_createexam.php" class="btn btn-secondary">Back</a>
+                <button type="submit" class="btn btn-primary">Save Questions</button>
+            </div>
+        </form>
+    </div>
 </div>
 
 <script>

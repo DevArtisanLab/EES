@@ -54,7 +54,7 @@ foreach ($answers as $question_id => $user_answer) {
     $correct_option = trim($correct_answers[$question_id] ?? '');
     $parsed_letter = strtoupper(substr($full_answer, 0, 1));
     $selected_option = '';
-    $is_correct = 0;
+    $is_correct = null; // default for safety
 
     switch ($type) {
         case 'multiple choice':
@@ -64,6 +64,8 @@ foreach ($answers as $question_id => $user_answer) {
             if (strtoupper($correct_option) === $selected_option) {
                 $is_correct = 1;
                 $score_count++;
+            } else {
+                $is_correct = 0;
             }
             break;
 
@@ -74,6 +76,8 @@ foreach ($answers as $question_id => $user_answer) {
             if (strtolower($full_answer) === strtolower($correct_option)) {
                 $is_correct = 1;
                 $score_count++;
+            } else {
+                $is_correct = 0;
             }
             break;
 
@@ -89,17 +93,29 @@ foreach ($answers as $question_id => $user_answer) {
 
             $is_correct = ($match_count > 0) ? 1 : 0;
             $score_count += $match_count;
-            $total_points_possible += count($correct_items); // Add all possible correct points
+            $total_points_possible += count($correct_items);
+            break;
+
+        case 'essay':
+            $selected_option = '';
+            $is_correct = null; // manually scored later
             break;
 
         default:
             $selected_option = '';
+            $is_correct = 0;
             break;
     }
 
     // Save each answer
     $stmt = $conn->prepare("INSERT INTO answers (employee_num, exam_id, question_id, selected_option, full_answer, is_correct, answered_at) VALUES (?, ?, ?, ?, ?, ?, ?)");
-    $stmt->bind_param("siissis", $employee_num, $exam_id, $question_id, $selected_option, $full_answer, $is_correct, $current_time);
+    
+    if (is_null($is_correct)) {
+        $stmt->bind_param("siissss", $employee_num, $exam_id, $question_id, $selected_option, $full_answer, $is_correct, $current_time);
+    } else {
+        $stmt->bind_param("siissis", $employee_num, $exam_id, $question_id, $selected_option, $full_answer, $is_correct, $current_time);
+    }
+
     $stmt->execute();
     $stmt->close();
 }
@@ -112,62 +128,60 @@ $stmt->bind_param("iss", $raw_score, $current_time, $employee_num);
 $stmt->execute();
 $stmt->close();
 
-// Recalculate average
-$total_percentage = 0;
-$exams_taken = 0;
+// // Recalculate average
+// $total_percentage = 0;
+// $exams_taken = 0;
 
-for ($i = 1; $i <= 10; $i++) {
-    $stmt = $conn->prepare("SELECT id, correct_option, question_type FROM question WHERE exam_id = ?");
-    $stmt->bind_param("i", $i);
-    $stmt->execute();
-    $result = $stmt->get_result();
+// for ($i = 1; $i <= 10; $i++) {
+//     $stmt = $conn->prepare("SELECT id, correct_option, question_type FROM question WHERE exam_id = ?");
+//     $stmt->bind_param("i", $i);
+//     $stmt->execute();
+//     $result = $stmt->get_result();
 
-    $total_possible = 0;
-    while ($row = $result->fetch_assoc()) {
-        $type = strtolower($row['question_type']);
-        if ($type === 'enumeration') {
-            $items = array_filter(array_map('trim', explode(',', strtolower($row['correct_option']))));
-            $total_possible += count($items);
-        } else {
-            $total_possible += 1;
-        }
-    }
-    $stmt->close();
+//     $total_possible = 0;
+//     while ($row = $result->fetch_assoc()) {
+//         $type = strtolower($row['question_type']);
+//         if ($type === 'enumeration') {
+//             $items = array_filter(array_map('trim', explode(',', strtolower($row['correct_option']))));
+//             $total_possible += count($items);
+//         } elseif ($type !== 'essay') {
+//             $total_possible += 1;
+//         }
+//     }
+//     $stmt->close();
 
-    if ($total_possible > 0) {
-        $col = "score_" . $i;
-        $stmt = $conn->prepare("SELECT `$col` FROM employee WHERE employee_num = ?");
-        $stmt->bind_param("s", $employee_num);
-        $stmt->execute();
-        $result = $stmt->get_result();
-        $score_row = $result->fetch_assoc();
-        $stmt->close();
+//     if ($total_possible > 0) {
+//         $col = "score_" . $i;
+//         $stmt = $conn->prepare("SELECT `$col` FROM employee WHERE employee_num = ?");
+//         $stmt->bind_param("s", $employee_num);
+//         $stmt->execute();
+//         $result = $stmt->get_result();
+//         $score_row = $result->fetch_assoc();
+//         $stmt->close();
 
-        $raw = $score_row[$col];
-        if (!is_null($raw)) {
-            $percentage = ($raw / $total_possible) * 100;
-            $total_percentage += $percentage;
-            $exams_taken++;
-        }
-    }
-}
+//         $raw = $score_row[$col];
+//         if (!is_null($raw)) {
+//             $percentage = ($raw / $total_possible) * 100;
+//             $total_percentage += $percentage;
+//             $exams_taken++;
+//         }
+//     }
+// }
 
-$average_percentage = ($exams_taken > 0) ? ($total_percentage / $exams_taken) : 0;
-$average_rounded = round($average_percentage, 2);
-$status = ($average_percentage >= 75) ? "Passed" : "Failed";
+// $average_percentage = ($exams_taken > 0) ? ($total_percentage / $exams_taken) : 0;
+// $average_rounded = round($average_percentage, 2);
+// $status = ($average_percentage >= 75) ? "Passed" : "Failed";
 
-// Update final employee status
-$stmt = $conn->prepare("UPDATE employee SET status = ?, average = ? WHERE employee_num = ?");
-$stmt->bind_param("sds", $status, $average_rounded, $employee_num);
-$stmt->execute();
-$stmt->close();
+// // Update final employee status
+// $stmt = $conn->prepare("UPDATE employee SET status = ?, average = ? WHERE employee_num = ?");
+// $stmt->bind_param("sds", $status, $average_rounded, $employee_num);
+// $stmt->execute();
+// $stmt->close();
 
 // Clean session
 unset($_SESSION["answers"], $_SESSION["start_time"], $_SESSION["exam_duration"]);
 $conn->close();
 ?>
-
-
 <!-- Confirmation Page -->
 <!DOCTYPE html>
 <html lang="en">
