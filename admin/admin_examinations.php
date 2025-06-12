@@ -40,6 +40,7 @@ $result = $conn->query($sql);
             font-family: 'Segoe UI', sans-serif;
             margin: 0;
             background-color: #f8f9fa;
+            color: #374151;
         }
         .d-flex {
             display: flex;
@@ -81,49 +82,69 @@ $result = $conn->query($sql);
         }
         .main-content {
             margin-left: 250px;
-            padding: 20px;
+            padding: 30px;
             width: calc(100% - 250px);
         }
         h2 {
             font-weight: 600;
-            font-size: 1.5rem;
+            font-size: 1.75rem;
+            color: #111827;
         }
         #btnCreate {
-            background-color: #0d6efd;
+            background-color: #2563eb;
             color: white;
             border-radius: 10px;
             padding: 8px 16px;
             border: none;
+            font-size: 14px;
         }
         #btnCreate:hover {
-            background-color: #0b5ed7;
+            background-color: #1e40af;
         }
-
-        /* ✅ Status badges */
+        #btnImport {
+            font-size: 14px;
+            border-radius: 10px;
+        }
+        .table thead {
+            background-color: #f1f3f5;
+        }
+        .table th, .table td {
+            vertical-align: middle;
+            font-size: 14px;
+        }
+        .action-btns .btn {
+            margin-right: 5px;
+            font-size: 0.8rem;
+        }
+        .card {
+            background-color: #ffffff;
+            border-radius: 15px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            padding: 20px;
+        }
+        /* Status badges */
         .status-active {
             background-color: #d1e7dd;
             color: #0f5132;
-            border-radius: 8px;
+            border-radius: 20px;
             padding: 4px 12px;
             font-size: 0.85rem;
         }
         .status-inactive {
             background-color: #f8d7da;
             color: #842029;
-            border-radius: 8px;
+            border-radius: 20px;
             padding: 4px 12px;
             font-size: 0.85rem;
         }
-
-        .table thead {
-            background-color: #f1f3f5;
+        /* Form inline styling */
+        .form-inline input[type="file"] {
+            margin-right: 10px;
+            font-size: 14px;
         }
-        .table th, .table td {
-            vertical-align: middle;
-        }
-        .action-btns .btn {
-            margin-right: 5px;
-            font-size: 0.8rem;
+        .table-responsive {
+            border-radius: 10px;
+            overflow: hidden;
         }
     </style>
 </head>
@@ -134,15 +155,17 @@ $result = $conn->query($sql);
     <div class="main-content">
         <div class="d-flex justify-content-between align-items-center mb-4">
             <h2>Examinations Management</h2>
-            <form action="import_exam.php" method="POST" enctype="multipart/form-data">
-                <input type="file" name="excel_file" required>
-                <button class="btn btn-success" id="btnImport" type="submit">📥 Import Exam</button>
-            </form>
-            <a href="admin_createexam.php" class="btn btn-primary" id="btnCreate">+ Create Exam</a>
+            <div class="d-flex align-items-center gap-2">
+                <form action="import_exam.php" method="POST" enctype="multipart/form-data" class="d-flex align-items-center form-inline">
+                    <input type="file" name="excel_file" required>
+                    <button class="btn btn-success" id="btnImport" type="submit"><i class="bi bi-upload"></i> Import</button>
+                </form>
+                <a href="admin_createexam.php" class="btn" id="btnCreate"><i class="bi bi-plus-circle"></i> Create Exam</a>
+            </div>
         </div>
 
-        <div class="table-responsive">
-            <table class="table align-middle">
+        <div class="table-responsive card">
+            <table class="table align-middle mb-0">
                 <thead>
                     <tr>
                         <th>Exam ID</th>
@@ -158,8 +181,8 @@ $result = $conn->query($sql);
                     <?php while ($row = $result->fetch_assoc()): ?>
                     <tr>
                         <td><?= $row['exam_id'] ?></td>
-                        <td><?= $row['title'] ?></td>
-                        <td><?= $row['position'] ?></td>
+                        <td><?= htmlspecialchars($row['title']) ?></td>
+                        <td><?= htmlspecialchars($row['position']) ?></td>
                         <td><?= $row['duration'] ?> min</td>
                         <td><?= $row['created'] ?></td>
                         <td>
@@ -170,9 +193,9 @@ $result = $conn->query($sql);
                             <?php endif; ?>
                         </td>
                         <td class="action-btns">
-                            <a href="admin_editexam.php?id=<?= $row['exam_id'] ?>" class="btn btn-outline-primary">View</a>
-                            <a href="admin_editquestion.php?id=<?= $row['exam_id'] ?>" class="btn btn-outline-success">Edit</a>
-                            <a href="delete_exam.php?id=<?= $row['exam_id'] ?>" class="btn btn-outline-danger" onclick="return confirm('Are you sure?')">Delete</a>
+                            <a href="admin_editexam.php?id=<?= $row['exam_id'] ?>" class="btn btn-outline-primary"><i class="bi bi-eye"></i></a>
+                            <a href="admin_editquestion.php?id=<?= $row['exam_id'] ?>" class="btn btn-outline-success"><i class="bi bi-pencil-square"></i></a>
+                            <a href="delete_exam.php?id=<?= $row['exam_id'] ?>" class="btn btn-outline-danger" onclick="return confirm('Are you sure?')"><i class="bi bi-trash"></i></a>
                         </td>
                     </tr>
                     <?php endwhile; ?>

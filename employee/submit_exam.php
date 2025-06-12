@@ -46,9 +46,23 @@ $stmt->close();
 $score_count = 0;
 $total_points_possible = 0;
 $current_time = date('Y-m-d H:i:s');
+$has_new_answers = false; // Track if new answers were saved
 
 // Score each answer
 foreach ($answers as $question_id => $user_answer) {
+    // Prevent duplicate submissions
+    $check_stmt = $conn->prepare("SELECT 1 FROM answers WHERE employee_num = ? AND question_id = ?");
+    $check_stmt->bind_param("si", $employee_num, $question_id);
+    $check_stmt->execute();
+    $check_stmt->store_result();
+    if ($check_stmt->num_rows > 0) {
+        $check_stmt->close();
+        continue; // Already answered, skip
+    }
+    $check_stmt->close();
+
+    $has_new_answers = true; // Mark that we have a new answer
+
     $full_answer = trim($user_answer);
     $type = strtolower($question_types[$question_id] ?? 'multiple choice');
     $correct_option = trim($correct_answers[$question_id] ?? '');
@@ -120,63 +134,15 @@ foreach ($answers as $question_id => $user_answer) {
     $stmt->close();
 }
 
-// Save raw score to DB
-$raw_score = $score_count;
-$score_column = "score_" . $exam_id;
-$stmt = $conn->prepare("UPDATE employee SET `$score_column` = ?, submitted_at = ? WHERE employee_num = ?");
-$stmt->bind_param("iss", $raw_score, $current_time, $employee_num);
-$stmt->execute();
-$stmt->close();
-
-// // Recalculate average
-// $total_percentage = 0;
-// $exams_taken = 0;
-
-// for ($i = 1; $i <= 10; $i++) {
-//     $stmt = $conn->prepare("SELECT id, correct_option, question_type FROM question WHERE exam_id = ?");
-//     $stmt->bind_param("i", $i);
-//     $stmt->execute();
-//     $result = $stmt->get_result();
-
-//     $total_possible = 0;
-//     while ($row = $result->fetch_assoc()) {
-//         $type = strtolower($row['question_type']);
-//         if ($type === 'enumeration') {
-//             $items = array_filter(array_map('trim', explode(',', strtolower($row['correct_option']))));
-//             $total_possible += count($items);
-//         } elseif ($type !== 'essay') {
-//             $total_possible += 1;
-//         }
-//     }
-//     $stmt->close();
-
-//     if ($total_possible > 0) {
-//         $col = "score_" . $i;
-//         $stmt = $conn->prepare("SELECT `$col` FROM employee WHERE employee_num = ?");
-//         $stmt->bind_param("s", $employee_num);
-//         $stmt->execute();
-//         $result = $stmt->get_result();
-//         $score_row = $result->fetch_assoc();
-//         $stmt->close();
-
-//         $raw = $score_row[$col];
-//         if (!is_null($raw)) {
-//             $percentage = ($raw / $total_possible) * 100;
-//             $total_percentage += $percentage;
-//             $exams_taken++;
-//         }
-//     }
-// }
-
-// $average_percentage = ($exams_taken > 0) ? ($total_percentage / $exams_taken) : 0;
-// $average_rounded = round($average_percentage, 2);
-// $status = ($average_percentage >= 75) ? "Passed" : "Failed";
-
-// // Update final employee status
-// $stmt = $conn->prepare("UPDATE employee SET status = ?, average = ? WHERE employee_num = ?");
-// $stmt->bind_param("sds", $status, $average_rounded, $employee_num);
-// $stmt->execute();
-// $stmt->close();
+// Save raw score to DB if there are new answers
+if ($has_new_answers) {
+    $raw_score = $score_count;
+    $score_column = "score_" . $exam_id;
+    $stmt = $conn->prepare("UPDATE employee SET `$score_column` = ?, submitted_at = ? WHERE employee_num = ?");
+    $stmt->bind_param("iss", $raw_score, $current_time, $employee_num);
+    $stmt->execute();
+    $stmt->close();
+}
 
 // Clean session
 unset($_SESSION["answers"], $_SESSION["start_time"], $_SESSION["exam_duration"]);
@@ -187,22 +153,30 @@ $conn->close();
 <html lang="en">
 <head>
     <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Examination Complete</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
     <style>
         body {
             background-color: #f9fafb;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 15px;
         }
         .card {
-            max-width: 600px;
-            margin: 5% auto;
-            padding: 20px;
+            padding: 30px 20px;
             border-radius: 12px;
-            box-shadow: 0 4px 8px rgba(0,0,0,0.05);
+            box-shadow: 0 0 15px rgba(0,0,0,0.05);
+            max-width: 500px;
+            width: 100%;
         }
         .check-icon {
-            font-size: 40px;
-            color: #28a745;
+            font-size: 3rem;
+            color: #10b981;
         }
     </style>
 </head>
@@ -213,5 +187,8 @@ $conn->close();
     <p>Thank you for completing the examination.</p>
     <a href="../index.php" class="btn btn-primary mt-4">Return to Home</a>
 </div>
+
+<!-- Bootstrap JS (optional for buttons or interactions) -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

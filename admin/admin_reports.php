@@ -13,10 +13,6 @@
       margin: 0;
     }
 
-    .d-flex {
-      display: flex;
-    }
-
     .sidebar {
       width: 250px;
       height: 100vh;
@@ -28,57 +24,39 @@
       left: 0;
     }
 
-    .sidebar .title {
-      color: #2563eb;
-      font-size: 20px;
-      font-weight: bold;
-      margin-bottom: 30px;
-    }
-
-    .sidebar .nav-link {
-      color: #374151;
-      font-size: 14px;
-      margin-bottom: 15px;
-      display: flex;
-      align-items: center;
-      text-decoration: none;
-    }
-
-    .sidebar .nav-link:hover,
-    .sidebar .nav-link.active {
-      background-color: #eef2ff;
-      border-radius: 8px;
-      color: #2563eb;
-      font-weight: 500;
-    }
-
-    .sidebar .nav-link i {
-      margin-right: 10px;
-      font-size: 16px;
-    }
-
     .main-content {
       margin-left: 250px;
-      padding: 40px;
-      width: calc(100% - 250px);
+      padding: 30px;
+      min-height: 100vh;
+      background-color: #f9fafb;
     }
 
     h1 {
-      font-size: 36px;
-      font-weight: 700;
-      color: #111827;
+      font-size: 32px;
+      font-weight: bold;
+      color: #1f2937;
+    }
+
+    .top-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      margin-bottom: 20px;
     }
 
     .filters {
-      margin-top: 20px;
       display: flex;
-      gap: 15px;
+      gap: 20px;
       flex-wrap: wrap;
+      margin-bottom: 30px;
     }
 
     .filters label {
       font-size: 14px;
       color: #374151;
+      display: flex;
+      flex-direction: column;
     }
 
     .filters select {
@@ -88,149 +66,111 @@
       border: 1px solid #ccc;
     }
 
-    .stats-container {
-      display: flex;
-      gap: 20px;
-      margin-top: 30px;
-      flex-wrap: wrap;
-    }
-
-    .card {
-      background: white;
-      border-radius: 10px;
-      padding: 20px;
-      flex: 1;
-      box-shadow: 0 1px 2px rgba(0,0,0,0.05);
-      text-align: center;
-      min-width: 200px;
-    }
-
-    .card-title {
-      font-size: 14px;
-      color: #6b7280;
-      margin-bottom: 8px;
-    }
-
-    .card-value {
-      font-size: 28px;
-      font-weight: 700;
-      color: #111827;
-    }
-
-    .trend {
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      gap: 5px;
-      margin-top: 6px;
-      font-size: 12px;
-    }
-
-    .trend-up {
-      color: #10b981;
-    }
-
-    .trend-down {
-      color: #ef4444;
-    }
-
-    .top-bar {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      flex-wrap: wrap;
-    }
-
     .button {
-      padding: 8px 14px;
-      background: #3b82f6;
-      color: white;
-      border: none;
-      border-radius: 6px;
-      cursor: pointer;
+      padding: 8px 16px;
       font-size: 14px;
+      font-weight: 500;
+      border-radius: 6px;
+      border: none;
+      cursor: pointer;
+      transition: 0.3s;
     }
 
     .export-btn {
-      background: #f3f4f6;
-      color: #374151;
+      background-color: #e5e7eb;
+      color: #1f2937;
       margin-right: 10px;
+    }
+
+    .button:not(.export-btn) {
+      background-color: #3b82f6;
+      color: white;
+    }
+
+    .button:hover {
+      opacity: 0.9;
+    }
+
+    table thead th {
+      white-space: nowrap;
+      background-color: #f3f4f6;
+      font-size: 14px;
+      color: #111827;
+    }
+
+    table tbody td {
+      font-size: 14px;
+      color: #374151;
+    }
+
+    #report-container h3 {
+      font-size: 20px;
+      font-weight: 600;
+      color: #111827;
+    }
+
+    .table-responsive {
+      max-height: 70vh;
+      overflow: auto;
     }
   </style>
 </head>
 <body>
-  <div class="d-flex">
-    <!-- Sidebar already included via include -->
-
-    <div class="main-content">
-      <div class="top-bar mb-4">
-        <h1>Reports</h1>
-        <div>
-          <button class="button export-btn">📄 Generate Report</button>
-          <button class="button">🖨️ Export Report</button>
-        </div>
+  <div class="main-content">
+    <div class="top-bar">
+      <h2>Reports</h1>
+      <div>
+        <button class="button export-btn">📄 Generate Report</button>
+        <button class="button">🖨️ Export Report</button>
       </div>
+    </div>
 
-      <div class="filters">
-        <label>Position:
-          <select>
-            <option>All Positions</option>
-          </select>
-        </label>
-        <label>Time Period:
-          <select>
-            <option>This Month</option>
-          </select>
-        </label>
-        <label>Status:
-          <select>
-            <option>All Status</option>
-          </select>
-        </label>
-      </div>
+    <div class="filters">
+      <label>Position:
+        <select>
+          <option>All Positions</option>
+        </select>
+      </label>
+      <label>Time Period:
+        <select>
+          <option>This Month</option>
+        </select>
+      </label>
+      <label>Status:
+        <select>
+          <option>All Status</option>
+        </select>
+      </label>
+    </div>
 
-      <div class="stats-container mt-5">
-        <div class="card">
-          <div class="card-title">Total Exams</div>
-          <div class="card-value">25</div>
-        </div>
-        <div class="card">
-          <div class="card-title">Passed</div>
-          <div class="card-value">18</div>
-          <div class="trend trend-up"><i class="bi bi-arrow-up"></i> 10%</div>
-        </div>
-        <div class="card">
-          <div class="card-title">Failed</div>
-          <div class="card-value">7</div>
-          <div class="trend trend-down"><i class="bi bi-arrow-down"></i> 5%</div>
-        </div>
-      </div>
-
-      <!-- ADDED REPORT TABLE -->
-      <div class="mt-5" id="report-container" style="display:none;">
-        <h3 class="mb-3">Generated Report</h3>
-        <div class="table-responsive">
-          <table class="table table-bordered" id="report-table">
-            <thead class="table-light">
-              <tr>
-                <th>Employee #</th>
-                <th>Full Name</th>
-                <th>Branch</th>
-                <th>Position</th>
-                <th>Date of Exam</th>
-                <th>Average</th>
-                <th>Status</th>
-                <th>Submitted At</th>
-              </tr>
-            </thead>
-            <tbody></tbody>
-          </table>
-        </div>
+    <div class="mt-4" id="report-container" style="display:none;">
+      <h3 class="mb-3">Generated Report</h3>
+      <div class="table-responsive">
+        <table class="table table-bordered align-middle text-center" id="report-table">
+          <thead class="table-light">
+            <tr>
+              <th>Employee Number</th>
+              <th>Full Name</th>
+              <th>Branch</th>
+              <th>Position</th>
+              <th>Date Started</th>
+              <th>Date of Exam</th>
+              <th>Score 1</th>
+              <th>Score 2</th>
+              <th>Score 3</th>
+              <th>Score 4</th>
+              <th>Score 5</th>
+              <th>Score 6</th>
+              <th>Average</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
       </div>
     </div>
   </div>
 
-  <!-- ADDED SCRIPT -->
   <script>
     document.querySelector('.export-btn').addEventListener('click', function () {
       fetch('generate_report.php')
@@ -241,14 +181,20 @@
           data.forEach(row => {
             const tr = document.createElement('tr');
             tr.innerHTML = `
-              <td>${row.employee_num}</td>
-              <td>${row.full_name}</td>
-              <td>${row.branch}</td>
-              <td>${row.position}</td>
-              <td>${row.date_of_exam}</td>
-              <td>${row.average}</td>
-              <td>${row.status}</td>
-              <td>${row.submitted_at}</td>
+              <td>${row.employee_num ?? ''}</td>
+              <td>${row.full_name ?? ''}</td>
+              <td>${row.branch ?? ''}</td>
+              <td>${row.position ?? ''}</td>
+              <td>${row.date_started ?? ''}</td>
+              <td>${row.date_of_exam ?? ''}</td>
+              <td>${row.score_1 ?? ''}</td>
+              <td>${row.score_2 ?? ''}</td>
+              <td>${row.score_3 ?? ''}</td>
+              <td>${row.score_4 ?? ''}</td>
+              <td>${row.score_5 ?? ''}</td>
+              <td>${row.score_6 ?? ''}</td>
+              <td>${row.average ?? ''}</td>
+              <td>${row.status ?? ''}</td>
             `;
             tbody.appendChild(tr);
           });
@@ -270,7 +216,7 @@
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = 'exam_report.csv';
+      a.download = 'EES_report.csv';
       a.click();
       window.URL.revokeObjectURL(url);
     });

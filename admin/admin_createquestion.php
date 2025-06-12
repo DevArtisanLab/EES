@@ -12,7 +12,8 @@ if ($exam_id <= 0) {
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $questions = $_POST['question'] ?? [];
     $types = $_POST['type'] ?? [];
-    $corrects = $_POST['correct'] ?? [];
+    $corrects = $_POST['correct'] ?? [];         // A, B, C, D
+    $correct_open = $_POST['correct_open'] ?? [];
     $optionsA = $_POST['option_A'] ?? [];
     $optionsB = $_POST['option_B'] ?? [];
     $optionsC = $_POST['option_C'] ?? [];
@@ -21,20 +22,42 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     for ($i = 0; $i < count($questions); $i++) {
         $question = trim($questions[$i]);
         $type = $types[$i] ?? '';
-        $correct = is_array($corrects) ? trim($corrects[$i] ?? '') : trim($corrects ?? '');
+        $correctLetter = $corrects[$i] ?? '';
+        $correctAnswerOpen = trim($correct_open[$i] ?? '');
+        $correct = '';
 
         if ($question === '' || $type === '') continue;
 
         $requiresOptions = in_array($type, ['Multiple Choice', 'True/False']);
         $requiresCorrect = ($type !== 'Essay');
 
-        if ($requiresCorrect && $correct === '') continue;
+        if ($requiresCorrect && !$requiresOptions && $correctAnswerOpen === '') continue;
+        if ($requiresOptions && $correctLetter === '') continue;
 
+        // Default options (MC or TF)
         $optionA = $optionsA[$i] ?? null;
         $optionB = $optionsB[$i] ?? null;
         $optionC = $optionsC[$i] ?? null;
         $optionD = $optionsD[$i] ?? null;
 
+        // True/False has fixed options
+        if ($type === 'True/False') {
+            $optionA = 'True';
+            $optionB = 'False';
+            $optionC = null;
+            $optionD = null;
+        }
+
+        // Set correct answer
+        if ($requiresOptions) {
+            // Save only the letter (A, B, C, D) for MC or TF
+            $correct = $correctLetter;
+        } elseif ($requiresCorrect) {
+            // Save open text for Identification, Enumeration, etc.
+            $correct = $correctAnswerOpen;
+        }
+
+        // Prepare and execute insert
         if ($requiresOptions) {
             $stmt = $conn->prepare("INSERT INTO question (exam_id, question_text, question_type, option_a, option_b, option_c, option_d, correct_option) VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
             $stmt->bind_param("isssssss", $exam_id, $question, $type, $optionA, $optionB, $optionC, $optionD, $correct);
@@ -46,15 +69,18 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             $stmt->bind_param("iss", $exam_id, $question, $type);
         }
 
-        $stmt->execute();
+        if (!$stmt->execute()) {
+            echo "Error saving question: " . $stmt->error;
+        }
+
         $stmt->close();
     }
 
     header("Location: admin_examinations.php");
     exit;
 }
-?>
 
+?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -100,9 +126,8 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
     <div class="main-content">
         <h3 class="mb-4">Add Examination Questions</h3>
-        <h5 class="mb-4 text-muted" hidden>Examination ID: <?= htmlspecialchars($exam_id) ?></h5>
         <form method="POST">
-            <?php for ($i = 0; $i < 6; $i++): ?>
+            <?php for ($i = 0; $i < 50; $i++): ?>
             <div class="card mb-3">
                 <div class="card-header">Question <?= $i + 1 ?></div>
                 <div class="card-body">
@@ -148,7 +173,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
                     <div class="form-group mt-3" id="open_answer_<?= $i ?>" style="display: none;">
                         <label class="form-label">Correct Answer</label>
-                        <textarea class="form-control" name="correct[]"></textarea>
+                        <textarea class="form-control" name="correct_open[]"></textarea>
                         <small class="form-text text-muted">For Enumeration, separate answers with commas.</small>
                     </div>
                 </div>
@@ -182,7 +207,7 @@ document.addEventListener('DOMContentLoaded', function () {
             const isEssay = type === 'Essay';
 
             container.style.display = (isMC || isTF) ? 'block' : 'none';
-            openAnswer.style.display = isOpenAnswer ? 'block' : (isEssay ? 'none' : 'none');
+            openAnswer.style.display = isOpenAnswer ? 'block' : 'none';
 
             if (optionCWrapper) optionCWrapper.style.display = isTF ? 'none' : 'flex';
             if (optionDWrapper) optionDWrapper.style.display = isTF ? 'none' : 'flex';
@@ -191,9 +216,13 @@ document.addEventListener('DOMContentLoaded', function () {
                 if (isTF) {
                     optionAInput.value = 'True';
                     optionBInput.value = 'False';
-                } else if (isMC) {
+                    optionAInput.readOnly = true;
+                    optionBInput.readOnly = true;
+                } else {
                     optionAInput.value = '';
                     optionBInput.value = '';
+                    optionAInput.readOnly = false;
+                    optionBInput.readOnly = false;
                 }
             }
         };

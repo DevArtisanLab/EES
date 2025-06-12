@@ -13,37 +13,36 @@ if ($conn->connect_error) {
     die("Connection failed: " . $conn->connect_error);
 }
 
-// Get active exam_id and duration (duration is stored in MINUTES in DB)
+// Get active exam_id and duration
 $exam_result = $conn->query("SELECT exam_id, duration FROM examinations WHERE status = 'Active'");
 if ($exam_result && $exam_result->num_rows > 0) {
     $exam_row = $exam_result->fetch_assoc();
     $exam_id = $exam_row['exam_id'];
-    $exam_duration_minutes = $exam_row['duration']; // duration in minutes
+    $exam_duration_minutes = $exam_row['duration'];
 
     $_SESSION['exam_id'] = $exam_id;
-    $_SESSION['exam_duration'] = $exam_duration_minutes * 60; // convert to seconds
+    $_SESSION['exam_duration'] = $exam_duration_minutes * 60;
 } else {
     die("NO ACTIVE EXAMINATION YET!!.");
 }
 
-// Validate session variables (after setting them)
+// Validate session variables
 if (!isset($_SESSION["full_name"], $_SESSION["start_time"], $_SESSION["exam_duration"])) {
     header("Location: employee_form.php");
     exit;
 }
 
-// Timer calculation
+// Timer
 $remaining_time = ($_SESSION["start_time"] + $_SESSION["exam_duration"]) - time();
 if ($remaining_time <= 0) {
     header("Location: submit_exam.php");
     exit;
 }
 
-// Get total number of questions for the active exam
+// Get total questions
 $total_q_result = $conn->query("SELECT COUNT(*) as total FROM question WHERE exam_id = '$exam_id'");
 $total_q = $total_q_result->fetch_assoc()['total'];
 
-// Initialize current question index
 if (!isset($_SESSION['current_question'])) {
     $_SESSION['current_question'] = 0;
 }
@@ -72,18 +71,20 @@ $question = $question_result->fetch_assoc();
 <head>
     <meta charset="UTF-8">
     <title>Assessment Test</title>
-    
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <style>
         body {
             background-color: #f9fafb;
             color: #111827;
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 0;
         }
         .container {
             max-width: 600px;
             background-color: #fff;
             margin: 40px auto;
-            padding: 30px 40px;
+            padding: 30px 20px;
             border-radius: 12px;
             box-shadow: 0 0 10px rgba(0, 0, 0, 0.05);
         }
@@ -105,6 +106,10 @@ $question = $question_result->fetch_assoc();
             border: 1px solid #ccc;
             border-radius: 8px;
             cursor: pointer;
+            transition: background 0.2s;
+        }
+        .options label:hover {
+            background-color: #f0f0f0;
         }
         .options input[type="radio"] {
             margin-right: 10px;
@@ -118,15 +123,50 @@ $question = $question_result->fetch_assoc();
             cursor: pointer;
             font-size: 16px;
             float: right;
+            margin-top: 20px;
         }
         #timer {
             float: right;
             color: #2563eb;
             font-weight: bold;
         }
+
+        textarea {
+            width: 100%;
+            min-height: 100px;
+            padding: 10px;
+            border-radius: 8px;
+            border: 1px solid #ccc;
+            resize: vertical;
+            font-size: 14px;
+        }
+
+        @media (max-width: 600px) {
+            .container {
+                margin: 20px 10px;
+                padding: 20px 15px;
+            }
+            .user-info p {
+                font-size: 14px;
+            }
+            .question {
+                font-size: 16px;
+            }
+            button {
+                width: 100%;
+                float: none;
+                margin-top: 15px;
+            }
+            #timer {
+                float: none;
+                display: block;
+                text-align: left;
+                margin-top: 10px;
+            }
+        }
     </style>
     <script>
-        let timeLeft = <?= $remaining_time ?>;
+        let timeLeft = <?php echo $remaining_time; ?>;
         function startTimer() {
             const timerDisplay = document.getElementById("timer");
             const form = document.getElementById("examForm");
@@ -162,26 +202,22 @@ $question = $question_result->fetch_assoc();
             <input type="hidden" name="question_id" value="<?= htmlspecialchars($question['id']) ?>">
         </p>
         <div class="options">
-    <?php
-    $qtype = strtolower($question['question_type']);
-
-    if (in_array($qtype, ['identification', 'enumeration', 'fill in the blanks', 'essay'])) {
-        // Show textarea for open-ended questions
-        echo '<textarea name="answer" placeholder="Enter your answer here..." required style="width: 100%; min-height: 100px; padding: 10px; border-radius: 8px; border: 1px solid #ccc; resize: vertical;"></textarea>';
-    } else {
-        // Show radio buttons for multiple choice/true-false
-        if (!empty($question['option_a']))
-            echo '<label><input type="radio" name="answer" value="A. ' . htmlspecialchars($question['option_a']) . '" required> ' . htmlspecialchars($question['option_a']) . '</label>';
-        if (!empty($question['option_b']))
-            echo '<label><input type="radio" name="answer" value="B. ' . htmlspecialchars($question['option_b']) . '"> ' . htmlspecialchars($question['option_b']) . '</label>';
-        if (!empty($question['option_c']))
-            echo '<label><input type="radio" name="answer" value="C. ' . htmlspecialchars($question['option_c']) . '"> ' . htmlspecialchars($question['option_c']) . '</label>';
-        if (!empty($question['option_d']))
-            echo '<label><input type="radio" name="answer" value="D. ' . htmlspecialchars($question['option_d']) . '"> ' . htmlspecialchars($question['option_d']) . '</label>';
-    }
-    ?>
-</div>
-
+        <?php
+        $qtype = strtolower($question['question_type']);
+        if (in_array($qtype, ['identification', 'enumeration', 'fill in the blanks', 'essay'])) {
+            echo '<textarea name="answer" placeholder="Enter your answer here..." required></textarea>';
+        } else {
+            if (!empty($question['option_a']))
+                echo '<label><input type="radio" name="answer" value="A. ' . htmlspecialchars($question['option_a']) . '" required> ' . htmlspecialchars($question['option_a']) . '</label>';
+            if (!empty($question['option_b']))
+                echo '<label><input type="radio" name="answer" value="B. ' . htmlspecialchars($question['option_b']) . '"> ' . htmlspecialchars($question['option_b']) . '</label>';
+            if (!empty($question['option_c']))
+                echo '<label><input type="radio" name="answer" value="C. ' . htmlspecialchars($question['option_c']) . '"> ' . htmlspecialchars($question['option_c']) . '</label>';
+            if (!empty($question['option_d']))
+                echo '<label><input type="radio" name="answer" value="D. ' . htmlspecialchars($question['option_d']) . '"> ' . htmlspecialchars($question['option_d']) . '</label>';
+        }
+        ?>
+        </div>
         <button type="submit">
             <?= ($q_index + 1 === $total_q) ? "Submit" : "Next" ?>
         </button>
