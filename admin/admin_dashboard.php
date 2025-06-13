@@ -14,7 +14,18 @@ if ($conn->connect_error) {
 $total = $conn->query("SELECT COUNT(*) as count FROM employee")->fetch_assoc()['count'];
 $passed = $conn->query("SELECT COUNT(*) as count FROM employee WHERE status = 'Passed'")->fetch_assoc()['count'];
 $failed = $conn->query("SELECT COUNT(*) as count FROM employee WHERE status = 'Failed'")->fetch_assoc()['count'];
-$pending = $conn->query("SELECT COUNT(*) as count FROM employee WHERE status IS NULL AND average IS NULL")->fetch_assoc()['count'];
+
+// Combine pending from employee table and answers table (is_correct is NULL)
+$pendingEmployee = $conn->query("SELECT COUNT(*) as count FROM employee WHERE status IS NULL AND average IS NULL")->fetch_assoc()['count'];
+
+$pendingAnswers = $conn->query("
+  SELECT COUNT(DISTINCT employee_num) as count
+  FROM answers
+  WHERE is_correct IS NULL
+")->fetch_assoc()['count'];
+
+// Use the higher of the two to avoid undercounting
+$pending = max($pendingEmployee, $pendingAnswers);
 
 // Pass rate (only based on completed exams)
 $completed = $passed + $failed;
@@ -103,6 +114,7 @@ foreach ($positionStats as $pos => $data) {
 }
 asort($positionRates);
 ?>
+
 <!DOCTYPE html>
 <html lang="en">
 <head>

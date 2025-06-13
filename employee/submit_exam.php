@@ -46,53 +46,44 @@ $stmt->close();
 $score_count = 0;
 $total_points_possible = 0;
 $current_time = date('Y-m-d H:i:s');
-$has_new_answers = false; // Track if new answers were saved
+$has_new_answers = false;
 
 // Score each answer
 foreach ($answers as $question_id => $user_answer) {
-    // Prevent duplicate submissions
     $check_stmt = $conn->prepare("SELECT 1 FROM answers WHERE employee_num = ? AND question_id = ?");
     $check_stmt->bind_param("si", $employee_num, $question_id);
     $check_stmt->execute();
     $check_stmt->store_result();
     if ($check_stmt->num_rows > 0) {
         $check_stmt->close();
-        continue; // Already answered, skip
+        continue;
     }
     $check_stmt->close();
 
-    $has_new_answers = true; // Mark that we have a new answer
+    $has_new_answers = true;
 
     $full_answer = trim($user_answer);
     $type = strtolower($question_types[$question_id] ?? 'multiple choice');
     $correct_option = trim($correct_answers[$question_id] ?? '');
     $parsed_letter = strtoupper(substr($full_answer, 0, 1));
     $selected_option = '';
-    $is_correct = null; // default for safety
+    $is_correct = null;
 
     switch ($type) {
         case 'multiple choice':
         case 'true/false':
             $selected_option = $parsed_letter;
             $total_points_possible += 1;
-            if (strtoupper($correct_option) === $selected_option) {
-                $is_correct = 1;
-                $score_count++;
-            } else {
-                $is_correct = 0;
-            }
+            $is_correct = (strtoupper($correct_option) === $selected_option) ? 1 : 0;
+            if ($is_correct) $score_count++;
             break;
 
         case 'identification':
         case 'fill in the blanks':
             $selected_option = '';
             $total_points_possible += 1;
-            if (strtolower($full_answer) === strtolower($correct_option)) {
-                $is_correct = 1;
-                $score_count++;
-            } else {
-                $is_correct = 0;
-            }
+            $is_correct = (strtolower($full_answer) === strtolower($correct_option)) ? 1 : 0;
+            if ($is_correct) $score_count++;
             break;
 
         case 'enumeration':
@@ -101,10 +92,8 @@ foreach ($answers as $question_id => $user_answer) {
             $correct_items = array_filter(array_map('trim', explode(',', strtolower($correct_option))));
             $user_items = array_unique($user_items);
             $correct_items = array_unique($correct_items);
-
             $matches = array_intersect($user_items, $correct_items);
             $match_count = count($matches);
-
             $is_correct = ($match_count > 0) ? 1 : 0;
             $score_count += $match_count;
             $total_points_possible += count($correct_items);
@@ -112,7 +101,7 @@ foreach ($answers as $question_id => $user_answer) {
 
         case 'essay':
             $selected_option = '';
-            $is_correct = null; // manually scored later
+            $is_correct = null;
             break;
 
         default:
@@ -121,20 +110,17 @@ foreach ($answers as $question_id => $user_answer) {
             break;
     }
 
-    // Save each answer
     $stmt = $conn->prepare("INSERT INTO answers (employee_num, exam_id, question_id, selected_option, full_answer, is_correct, answered_at) VALUES (?, ?, ?, ?, ?, ?, ?)");
-    
     if (is_null($is_correct)) {
         $stmt->bind_param("siissss", $employee_num, $exam_id, $question_id, $selected_option, $full_answer, $is_correct, $current_time);
     } else {
         $stmt->bind_param("siissis", $employee_num, $exam_id, $question_id, $selected_option, $full_answer, $is_correct, $current_time);
     }
-
     $stmt->execute();
     $stmt->close();
 }
 
-// Save raw score to DB if there are new answers
+// Save score and compute average if no essay
 if ($has_new_answers) {
     $raw_score = $score_count;
     $score_column = "score_" . $exam_id;
@@ -142,6 +128,67 @@ if ($has_new_answers) {
     $stmt->bind_param("iss", $raw_score, $current_time, $employee_num);
     $stmt->execute();
     $stmt->close();
+
+    // Check for essay questions
+    $stmt = $conn->prepare("SELECT COUNT(*) AS essay_count FROM question WHERE exam_id = ? AND LOWER(question_type) = 'essay'");
+    $stmt->bind_param("i", $exam_id);
+    $stmt->execute();
+    $result = $stmt->get_result();
+    $row = $result->fetch_assoc();
+    $stmt->close();
+
+    if ($row['essay_count'] == 0) {
+        // Compute average and status
+        $totalPercentage = 0;
+        $examsTaken = 0;
+
+        for ($i = 1; $i <= 10; $i++) {
+            $scoreCol = "score_" . $i;
+            $stmt = $conn->prepare("SELECT `$scoreCol` FROM employee WHERE employee_num = ?");
+            $stmt->bind_param("s", $employee_num);
+            $stmt->execute();
+            $result = $stmt->get_result();
+            $scoreRow = $result->fetch_assoc();
+            $stmt->close();
+
+            $score = $scoreRow[$scoreCol];
+            if (!is_null($score)) {
+                $stmt = $conn->prepare("SELECT correct_option, question_type FROM question WHERE exam_id = ?");
+                $stmt->bind_param("i", $i);
+                $stmt->execute();
+                $result = $stmt->get_result();
+
+                $totalPossible = 0;
+                while ($row = $result->fetch_assoc()) {
+                    $type = strtolower($row['question_type']);
+                    if ($type === 'enumeration') {
+                        $items = array_filter(array_map('trim', explode(',', strtolower($row['correct_option']))));
+                        $totalPossible += count($items);
+                    } elseif ($type === 'essay') {
+                        $totalPossible += 10;
+                    } else {
+                        $totalPossible += 1;
+                    }
+                }
+                $stmt->close();
+
+                if ($totalPossible > 0) {
+                    $percentage = ($score / $totalPossible) * 100;
+                    $totalPercentage += $percentage;
+                    $examsTaken++;
+                }
+            }
+        }
+
+        $averagePercentage = ($examsTaken > 0) ? ($totalPercentage / $examsTaken) : 0;
+        $averageRounded = round($averagePercentage, 2);
+        $status = ($averagePercentage >= 75) ? "Passed" : "Failed";
+
+        $stmt = $conn->prepare("UPDATE employee SET average = ?, status = ? WHERE employee_num = ?");
+        $stmt->bind_param("dss", $averageRounded, $status, $employee_num);
+        $stmt->execute();
+        $stmt->close();
+    }
 }
 
 // Clean session
@@ -187,8 +234,6 @@ $conn->close();
     <p>Thank you for completing the examination.</p>
     <a href="../index.php" class="btn btn-primary mt-4">Return to Home</a>
 </div>
-
-<!-- Bootstrap JS (optional for buttons or interactions) -->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

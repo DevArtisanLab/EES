@@ -21,7 +21,7 @@
 
             if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['grade'])) {
                 $answerId = $_POST['answer_id'];
-                $grade = floatval($_POST['score']);
+                $grade = min(floatval($_POST['score']), 10.0);
 
                 $stmt = $conn->prepare("SELECT employee_num, exam_id FROM answers WHERE id = ?");
                 $stmt->bind_param("i", $answerId);
@@ -93,7 +93,7 @@
                 }
 
                 $averagePercentage = ($examsTaken > 0) ? ($totalPercentage / $examsTaken) : 0;
-                $averageRounded = round($averagePercentage, 2);
+                $averageRounded = round($averagePercentage);
                 $status = ($averagePercentage >= 75) ? "Passed" : "Failed";
 
                 $stmt = $conn->prepare("UPDATE employee SET average = ?, status = ? WHERE employee_num = ?");
@@ -117,7 +117,7 @@
                             <tr>
                                 <th>Employee #</th>
                                 <th>Exam ID</th>
-                                <th>Question ID</th>
+                                <th hidden>Question ID</th>
                                 <th>Essay Answer</th>
                                 <th>Score (out of 10)</th>
                             </tr>
@@ -127,14 +127,23 @@
                                 <tr>
                                     <td><?= htmlspecialchars($row['employee_num']) ?></td>
                                     <td><?= htmlspecialchars($row['exam_id']) ?></td>
-                                    <td><?= htmlspecialchars($row['question_id']) ?></td>
+                                    <td hidden><?= htmlspecialchars($row['question_id']) ?></td>
                                     <td><?= nl2br(htmlspecialchars($row['full_answer'])) ?></td>
                                     <td>
                                         <form method="post" class="d-flex align-items-center" style="gap: 5px;">
-                                            <input type="hidden" name="answer_id" value="<?= $row['id'] ?>">
-                                            <input type="number" name="score" step="0.01" min="0" max="10" class="form-control form-control-sm" placeholder="0-10" required>
+                                        <input type="hidden" name="answer_id" value="<?= $row['id'] ?>">
+                                        <input type="number"
+                                                name="score"
+                                                min="0"
+                                                max="10"
+                                                step="1"
+                                                class="form-control form-control-sm"
+                                                placeholder="0-10"
+                                                                                        required
+                                                oninput="this.value = this.value.slice(0, 2); if (this.value > 10) this.value = 10;">
                                             <button type="submit" name="grade" value="1" class="btn btn-primary btn-sm">Submit</button>
                                         </form>
+
                                     </td>
                                 </tr>
                             <?php endwhile; ?>
