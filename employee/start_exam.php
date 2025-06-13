@@ -23,7 +23,8 @@ if ($exam_result && $exam_result->num_rows > 0) {
     $_SESSION['exam_id'] = $exam_id;
     $_SESSION['exam_duration'] = $exam_duration_minutes * 60;
 } else {
-    die("NO ACTIVE EXAMINATION YET!!.");
+    header("Location: ../index.php"); // Change this to your desired page
+    exit();
 }
 
 // Validate session variables

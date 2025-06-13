@@ -82,7 +82,7 @@ while ($row = $examQuery->fetch_assoc()) {
 
 // Prepare labels and averages
 $examAverages = [];
-for ($i = 0; $i < 10; $i++) {
+for ($i = 0; $i < 8; $i++) {
   $examLabels[] = isset($examTitles[$i + 1]) ? $examTitles[$i + 1] : "Exam " . ($i + 1);
   $data = $examScores[$i];
   $average = $data['count'] > 0 ? round(($data['sum'] / $data['count']), 2) : 0;

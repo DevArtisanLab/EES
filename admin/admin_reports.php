@@ -1,8 +1,8 @@
 <?php
 session_start();
 
-// Automatically apply filters if GET parameters are present
-if ($_SERVER['REQUEST_METHOD'] === 'GET' && isset($_GET['position'])) {
+// Apply filters from GET request and store them in session
+if ($_SERVER['REQUEST_METHOD'] === 'GET' && isset($_GET['generate']) && $_GET['generate'] === 'true') {
   $_SESSION['filter_position'] = $_GET['position'] ?? 'All';
   $_SESSION['filter_time_period'] = $_GET['date_of_exam'] ?? 'All';
   $_SESSION['filter_status'] = $_GET['status'] ?? 'All';
@@ -152,8 +152,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET' && isset($_GET['position'])) {
             <option value="All" <?= ($_SESSION['filter_status'] ?? '') == 'All' ? 'selected' : '' ?>>All Status</option>
             <option value="Passed" <?= ($_SESSION['filter_status'] ?? '') == 'Passed' ? 'selected' : '' ?>>Passed</option>
             <option value="Failed" <?= ($_SESSION['filter_status'] ?? '') == 'Failed' ? 'selected' : '' ?>>Failed</option>
-            <option value="Pending" <?= ($_SESSION['filter_status'] ?? '') == 'Pending' ? 'selected' : '' ?>>Pending</option>
-          </select>
+           </select>
         </label>
       </form>
 
@@ -195,14 +194,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET' && isset($_GET['position'])) {
       const params = new URLSearchParams({
         position: position,
         date_of_exam: date_of_exam,
-        status: status
+        status: status,
+        generate: 'true' // this is the key to enable generation
       });
 
       window.location.href = window.location.pathname + '?' + params.toString();
     });
 
     window.addEventListener('DOMContentLoaded', function () {
-      <?php if (isset($_SESSION['filter_position'])): ?>
+      <?php if (isset($_GET['generate']) && $_GET['generate'] === 'true'): ?>
       fetch('generate_report.php')
         .then(response => response.json())
         .then(data => {

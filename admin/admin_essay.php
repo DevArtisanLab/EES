@@ -9,12 +9,7 @@
         <!-- Main Content Column -->
         <div class="col-md-9 col-lg-10 px-md-4 py-4">
             <?php
-            $servername = "localhost";
-            $username = "root";
-            $password = "";
-            $database = "ees";
-
-            $conn = new mysqli($servername, $username, $password, $database);
+            $conn = new mysqli("localhost", "root", "", "ees");
             if ($conn->connect_error) {
                 die("Connection failed: " . $conn->connect_error);
             }
@@ -40,8 +35,7 @@
                 $stmt = $conn->prepare("SELECT `$scoreColumn` FROM employee WHERE employee_num = ?");
                 $stmt->bind_param("s", $employeeNum);
                 $stmt->execute();
-                $result = $stmt->get_result();
-                $existingScore = $result->fetch_assoc()[$scoreColumn] ?? 0;
+                $existingScore = $stmt->get_result()->fetch_assoc()[$scoreColumn] ?? 0;
                 $stmt->close();
 
                 $updatedScore = $existingScore + $grade;
@@ -59,11 +53,9 @@
                     $stmt = $conn->prepare("SELECT `$scoreCol` FROM employee WHERE employee_num = ?");
                     $stmt->bind_param("s", $employeeNum);
                     $stmt->execute();
-                    $result = $stmt->get_result();
-                    $scoreRow = $result->fetch_assoc();
+                    $score = $stmt->get_result()->fetch_assoc()[$scoreCol];
                     $stmt->close();
 
-                    $score = $scoreRow[$scoreCol];
                     if (!is_null($score)) {
                         $stmt = $conn->prepare("SELECT correct_option, question_type FROM question WHERE exam_id = ?");
                         $stmt->bind_param("i", $i);
@@ -92,9 +84,9 @@
                     }
                 }
 
-                $averagePercentage = ($examsTaken > 0) ? ($totalPercentage / $examsTaken) : 0;
-                $averageRounded = round($averagePercentage);
-                $status = ($averagePercentage >= 75) ? "Passed" : "Failed";
+                $average = ($examsTaken > 0) ? ($totalPercentage / $examsTaken) : 0;
+                $averageRounded = round($average);
+                $status = ($average >= 75) ? "Passed" : "Failed";
 
                 $stmt = $conn->prepare("UPDATE employee SET average = ?, status = ? WHERE employee_num = ?");
                 $stmt->bind_param("dss", $averageRounded, $status, $employeeNum);
@@ -112,38 +104,63 @@
 
             <?php if ($result->num_rows > 0): ?>
                 <div class="table-responsive">
-                    <table class="table table-bordered">
-                        <thead class="table-light">
+                    <table class="table table-bordered table-hover align-middle bg-white shadow-sm rounded">
+                        <thead class="table-dark text-center">
                             <tr>
                                 <th>Employee #</th>
-                                <th>Exam ID</th>
-                                <th hidden>Question ID</th>
-                                <th>Essay Answer</th>
-                                <th>Score (out of 10)</th>
+                                <th>Title</th>
+                                <th style="width: 30%">Question</th>
+                                <th style="width: 40%">Essay Answer</th>
+                                <th style="width: 15%">Score (0–10)</th>
                             </tr>
                         </thead>
                         <tbody>
                             <?php while ($row = $result->fetch_assoc()): ?>
+                                <?php
+                                $qid = $row['question_id'];
+                                $questionText = "Not found";
+                                $q = $conn->query("SELECT question_text FROM question WHERE id = $qid");
+                                if ($q && $qrow = $q->fetch_assoc()) {
+                                    $questionText = $qrow['question_text'];
+                                }
+
+                                $examTitle = "Unknown";
+                                $examQuery = $conn->prepare("SELECT title FROM examinations WHERE exam_id = ?");
+                                $examQuery->bind_param("i", $row['exam_id']);
+                                $examQuery->execute();
+                                $examResult = $examQuery->get_result();
+                                if ($examResult && $examRow = $examResult->fetch_assoc()) {
+                                    $examTitle = $examRow['title'];
+                                }
+                                $examQuery->close();
+                                ?>
                                 <tr>
                                     <td><?= htmlspecialchars($row['employee_num']) ?></td>
-                                    <td><?= htmlspecialchars($row['exam_id']) ?></td>
-                                    <td hidden><?= htmlspecialchars($row['question_id']) ?></td>
-                                    <td><?= nl2br(htmlspecialchars($row['full_answer'])) ?></td>
+                                    <td><?= htmlspecialchars($examTitle) ?></td>
                                     <td>
-                                        <form method="post" class="d-flex align-items-center" style="gap: 5px;">
-                                        <input type="hidden" name="answer_id" value="<?= $row['id'] ?>">
-                                        <input type="number"
+                                        <strong>Q:</strong> <?= nl2br(htmlspecialchars($questionText)) ?>
+                                    </td>
+                                    <td style="white-space: pre-wrap; overflow-wrap: anywhere; background-color: #f8f9fa; padding: 10px; border-radius: 5px;">
+                                        <?= nl2br(htmlspecialchars($row['full_answer'])) ?>
+                                        <div class="text-muted small mt-2">Answered at: <?= htmlspecialchars($row['answered_at']) ?></div>
+                                    </td>
+                                    <td>
+                                        <form method="post" class="d-flex flex-column align-items-center">
+                                            <input type="hidden" name="answer_id" value="<?= $row['id'] ?>">
+                                            <input type="number"
                                                 name="score"
                                                 min="0"
                                                 max="10"
                                                 step="1"
-                                                class="form-control form-control-sm"
+                                                class="form-control form-control-sm text-center mb-2"
+                                                style="width: 80px;"
+                                                required
                                                 placeholder="0-10"
-                                                                                        required
-                                                oninput="this.value = this.value.slice(0, 2); if (this.value > 10) this.value = 10;">
-                                            <button type="submit" name="grade" value="1" class="btn btn-primary btn-sm">Submit</button>
+                                                oninput="this.value = Math.min(Math.max(this.value, 0), 10)">
+                                            <button type="submit" name="grade" value="1" class="btn btn-success btn-sm w-100">
+                                                Submit
+                                            </button>
                                         </form>
-
                                     </td>
                                 </tr>
                             <?php endwhile; ?>
